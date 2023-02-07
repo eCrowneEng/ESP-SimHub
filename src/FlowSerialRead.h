@@ -1,5 +1,7 @@
+#ifndef FlowSerialBegin
 #define FlowSerialBegin Serial.begin
 #define FlowSerialFlush Serial.flush
+#endif
 
 #include "ArqSerial.h"
 ARQSerial arqserial;

@@ -1,4 +1,23 @@
+#include <Arduino.h>
 #include <EspSimHub.h>
+
+#define INCLUDE_WIFI true
+
+
+#if INCLUDE_WIFI
+#define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
+#define DEBUG_TCP_BRIDGE true
+#define LED_PIN D4 // to show whether there are wifi clients or not, set to -1 to disable
+
+#include <TcpSerialBridge.h>
+#include <FullLoopbackStream.h>
+
+FullLoopbackStream outgoingStream;
+FullLoopbackStream incomingStream;
+TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream);
+
+#endif // INCLUDE_WIFI
+
 
 // J revision sketch
 #define VERSION 'j'
@@ -1055,6 +1074,16 @@ void buttonMatrixStatusChanged(int buttonId, byte Status) {
 
 void setup()
 {
+#if INCLUDE_WIFI
+#if DEBUG_TCP_BRIDGE
+	Serial.begin(115200);
+#endif
+#endif
+
+#if INCLUDE_WIFI
+	bridge.setup(/* resetSavedWifiSettings */ false);
+#endif
+
 	//#ifdef INCLUDE_TEMPGAUGE
 	//	shTEMPPIN.SetValue((int)80);
 	//#endif
@@ -1301,6 +1330,10 @@ char loop_opt;
 unsigned long lastSerialActivity = 0;
 
 void loop() {
+#if INCLUDE_WIFI
+	bridge.loop(/* startWifiConfigPortalAgain */ false);
+#endif
+
 #ifdef INCLUDE_SHAKEITL298N
 	shShakeitL298N.safetyCheck();
 #endif
@@ -1371,7 +1404,6 @@ void loop() {
 			}
 		}
 	}
-
 	if (millis() - lastSerialActivity > 5000) {
 		Command_Shutdown();
 	}

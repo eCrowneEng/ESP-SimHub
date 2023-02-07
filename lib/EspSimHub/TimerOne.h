@@ -3,7 +3,7 @@
 // Fake TimerOne used for Arduinos that may not be necessary for ESP
 //  This is a compatibility layer between what SimHub uses for Arduino
 //  and what we need for the ESP
-class TimerOne
+class FakeTimerOneLibrary
 {
 public:
     void initialize(unsigned long microseconds = 1000000) __attribute__((always_inline))
@@ -22,4 +22,4 @@ public:
     }
 };
 
-extern TimerOne Timer1;
+extern FakeTimerOneLibrary Timer1;

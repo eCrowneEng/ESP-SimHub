@@ -2,6 +2,14 @@
 #define __ARQSERIAL_H__
 //#define TESTFAIL
 
+#ifndef StreamRead
+#define StreamRead Serial.read
+#define StreamFlush Serial.flush
+#define StreamWrite Serial.write
+#define StreamPrint Serial.print
+#define StreamAvailable Serial.available
+#endif
+
 #include <Arduino.h>
 #include "RingBuffer.h"
 
@@ -30,7 +38,7 @@ private:
 		unsigned long fsr_startMillis = millis();
 		do {
 			if (idleFunction != 0) idleFunction(true);
-			c = Serial.read();
+			c = StreamRead();
 			if (c >= 0) {
 #ifdef TESTFAIL
 				testfailidx = (testfailidx + 1) % 5000;
@@ -50,7 +58,7 @@ private:
 		int packetID, length, header, res, i, crc, nextpacketid;
 		byte currentCrc;
 
-		while (Serial.available() > 0) {
+		while (StreamAvailable() > 0) {
 			header = Arq_TimedRead();
 			//DebugPrintLn("hello1");
 			currentCrc = 0;
@@ -64,14 +72,14 @@ private:
 				}
 
 				if (reason == 0) {
-					packetID = Arq_TimedRead();
+					packetID = Arq_TimedRead(); // ?
 					if (packetID < 0) {
 						reason = 0x01;
 					}
 				}
 
 				if (reason == 0) {
-					length = Arq_TimedRead();
+					length = Arq_TimedRead(); // 1
 					if (length <= 0 || length > 32) {
 						reason = 0x02;
 					}
@@ -80,7 +88,7 @@ private:
 				if (reason == 0)
 				{
 					for (i = 0; i < length && !reason; i++) {
-						res = Arq_TimedRead();
+						res = Arq_TimedRead(); // 106
 						partialdatabuffer[i] = res;
 						if (res < 0) reason = 0x05;
 					}
@@ -133,17 +141,17 @@ private:
 
 	void SendAcq(uint8_t packetId)
 	{
-		Serial.write(0x03);
-		Serial.write(packetId);
-		Serial.flush();
+		StreamWrite(0x03);
+		StreamWrite(packetId);
+		StreamFlush();
 	}
 
 	void SendNAcq(uint8_t lastKnownValidPacket, byte reason)
 	{
-		Serial.write(0x04);
-		Serial.write(lastKnownValidPacket);
-		Serial.write(reason);
-		Serial.flush();
+		StreamWrite(0x04);
+		StreamWrite(lastKnownValidPacket);
+		StreamWrite(reason);
+		StreamFlush();
 	}
 
 public:
@@ -153,13 +161,13 @@ public:
 	}
 
 	void CustomPacketStart(byte packetType, uint8_t length) {
-		Serial.write(0x09);
-		Serial.write(packetType);
-		Serial.write(length);
+		StreamWrite(0x09);
+		StreamWrite(packetType);
+		StreamWrite(length);
 	}
 
 	void CustomPacketSendByte(byte data) {
-		Serial.write(data);
+		StreamWrite(data);
 	}
 
 	void CustomPacketEnd() {
@@ -193,9 +201,9 @@ public:
 	}
 
 	void Write(byte data) {
-		Serial.write(0x08);
-		Serial.write(data);
-		Serial.flush();
+		StreamWrite(0x08);
+		StreamWrite(data);
+		StreamFlush();
 	}
 
 	void Print(char data)
@@ -205,50 +213,50 @@ public:
 
 	void Print(const char str[]) {
 		int len = strlen(str);
-		Serial.write(0x06);
-		Serial.write(len);
-		Serial.write(str);
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x06);
+		StreamWrite(len);
+		StreamWrite(str);
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void WriteString(String& data)
 	{
 		int len = data.length();
-		Serial.write(0x06);
-		Serial.write(len);
-		Serial.print(data);
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x06);
+		StreamWrite(len);
+		StreamPrint(data);
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void PrintString(const char str[]) {
 		int len = strlen(str);
-		Serial.write(0x06);
-		Serial.write(len);
-		Serial.write(str);
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x06);
+		StreamWrite(len);
+		StreamWrite(str);
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void PrintLn(const char str[]) {
 		int len = strlen(str);
-		Serial.write(0x06);
-		Serial.write(len + 1);
-		Serial.write(str);
-		Serial.write('\n');
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x06);
+		StreamWrite(len + 1);
+		StreamWrite(str);
+		StreamWrite('\n');
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void PrintLn(String& data)
 	{
-		Serial.write(0x06);
-		Serial.write(data.length() + 1);
-		Serial.print(data);
-		Serial.print('\n');
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x06);
+		StreamWrite(data.length() + 1);
+		StreamPrint(data);
+		StreamPrint('\n');
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void PrintLn() {
@@ -293,30 +301,30 @@ public:
 
 	void DebugPrintLn(String& data)
 	{
-		Serial.write(0x07);
-		Serial.write(data.length() + 1);
-		Serial.print(data);
-		Serial.print('\n');
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x07);
+		StreamWrite(data.length() + 1);
+		StreamPrint(data);
+		StreamPrint('\n');
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void DebugPrint(char data)
 	{
-		Serial.write(0x07);
-		Serial.write(1);
-		Serial.print(data);
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x07);
+		StreamWrite(1);
+		StreamPrint(data);
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 
 	void DebugPrintLn(const char str[]) {
-		Serial.write(0x07);
-		Serial.write((byte)(strlen(str) + 1));
-		Serial.print(str);
-		Serial.print('\n');
-		Serial.write(0x20);
-		Serial.flush();
+		StreamWrite(0x07);
+		StreamWrite((byte)(strlen(str) + 1));
+		StreamPrint(str);
+		StreamPrint('\n');
+		StreamWrite(0x20);
+		StreamFlush();
 	}
 };
 
