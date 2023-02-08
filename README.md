@@ -1,5 +1,7 @@
 # SimHub firmware for ESP8266
 
+Head over to the discord server to discuss this firmware: https://discord.gg/zw377qhj9c 
+
 ## What is this?
 Firmware source code for ESP8266 that is compatible with SimHub. It's derived from what SimHub lets you setup, but tweaked with a thin compatibility layer for the ESP8266.
 
