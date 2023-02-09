@@ -1,8 +1,4 @@
-#ifndef DEBUG_TCP_BRIDGE
-#define DEBUG_TCP_BRIDGE false
-#endif
-
-#include <ESP8266WiFi.h>
+#include <BoardWifi.h>
 #include <WiFiManager.h>
 
 // these will override the Serial interface that SimHub uses to use our Streams
@@ -19,7 +15,8 @@ class TcpSerialBridge {
     TcpSerialBridge(
         uint16_t tcpPort,
         Stream *outgoingStream,
-        Stream *incomingStream
+        Stream *incomingStream,
+        bool debug
         );
     void setup(bool resetWiFiSettings);
     void loop(bool startConfigPortalAgain);
@@ -30,4 +27,5 @@ class TcpSerialBridge {
     String ssid;
     Stream *outgoingStream;
     Stream *incomingStream;
+    bool debug;
 };

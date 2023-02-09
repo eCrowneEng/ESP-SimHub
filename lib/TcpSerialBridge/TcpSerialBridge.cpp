@@ -1,13 +1,8 @@
-#include <ESP8266WiFi.h>
+#include <BoardWifi.h>
 #include <WiFiManager.h>
 #include <TcpSerialBridge.h>
 
 #define MAX_PENDING_CLIENTS_PER_PORT 1
-
-#ifndef LED_PIN
-// Used for status, use -1 to disable
-#define LED_PIN -1
-#endif
 
 void assertConnected(boolean connected) {
 	if (!connected) {
@@ -20,19 +15,21 @@ void assertConnected(boolean connected) {
 TcpSerialBridge::TcpSerialBridge(
 	uint16_t tcpPort,
 	Stream *outgoingStream,
-	Stream *incomingStream
+	Stream *incomingStream,
+	bool debug
 ) : server(tcpPort) {
 	WiFiManager wifiManager;
 	WiFiClient serverClient();
 	ssid = "SHC-" + WiFi.macAddress();
 	this->outgoingStream = outgoingStream;
 	this->incomingStream = incomingStream;
+	this->debug = debug;
 }
 
 void TcpSerialBridge::setup(bool resetWiFiSettings) {
-#if DEBUG_TCP_BRIDGE
-	wifiManager.setDebugOutput(true);
-#endif
+	if(debug) {
+		wifiManager.setDebugOutput(true);
+	}
 	bool connected;	
 	WiFi.hostname(ssid);
 
@@ -44,15 +41,12 @@ void TcpSerialBridge::setup(bool resetWiFiSettings) {
   	connected = wifiManager.autoConnect(ssid.c_str(), NULL);	
 	assertConnected(connected);
 
-#if DEBUG_TCP_BRIDGE
-    Serial.println("Wifi is known and connected");
-#endif
+	if (debug) {
+    	Serial.println("Wifi is known and connected");
+	}
 
 	server.begin();
 	server.setNoDelay(true);
-
-	pinMode(LED_PIN, OUTPUT);
-	digitalWrite(LED_PIN, LOW);
 };
 
 void TcpSerialBridge::loop(bool startConfigPortalAgain) {
@@ -61,36 +55,34 @@ void TcpSerialBridge::loop(bool startConfigPortalAgain) {
 	// Useful if you can read a pin (button) and trigger this if you need
 	if (startConfigPortalAgain) {
 		bool connected;
-		connected = wifiManager.startConfigPortal(ssid.c_str());
-		assertConnected(connected);
+		wifiManager.startConfigPortal(ssid.c_str(), NULL);
 	}
+
+	yield();
 
 	// Check if there are any new clients
 	if (server.hasClient()) {
 		if (client && !client.connected()) {
-#if DEBUG_TCP_BRIDGE
-		Serial.println("client disconnected");
-#endif
+			if (debug) {
+				Serial.println("client disconnected");
+			}
 			client.stop();
 		}
-#if DEBUG_TCP_BRIDGE
-		Serial.println("client connected");
-#endif
+		if (debug) {
+			Serial.println("client connected");
+		}
 	} else {
 		//no free/disconnected spot so reject
 		WiFiClient rejectClient = server.available();
 		if (rejectClient) {
 			rejectClient.stop();
-#if DEBUG_TCP_BRIDGE
-		Serial.println("client rejected");
-#endif
+			if (debug) {
+				Serial.println("client rejected");
+			}
 		}
 	}
 
-	// Turn off led if there is a connection
 	bool clientConnected = (client && client.connected());
-	digitalWrite(LED_PIN, clientConnected);
-
 	if (clientConnected) {
 		if (client.available()) {
 			// if client data is available in tcp server

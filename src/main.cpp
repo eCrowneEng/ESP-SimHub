@@ -7,14 +7,13 @@
 #if INCLUDE_WIFI
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
 #define DEBUG_TCP_BRIDGE true
-#define LED_PIN D4 // to show whether there are wifi clients or not, set to -1 to disable
 
 #include <TcpSerialBridge.h>
 #include <FullLoopbackStream.h>
 
 FullLoopbackStream outgoingStream;
 FullLoopbackStream incomingStream;
-TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream);
+TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_BRIDGE);
 
 #endif // INCLUDE_WIFI
 
@@ -82,11 +81,15 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream);
 //#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
 
-#include <avr/pgmspace.h>
+#if (defined(__AVR__))
+#include <avr\pgmspace.h>
+#else
+#include <pgmspace.h>
+#endif
+
 #include <EEPROM.h>
 #include <SPI.h>
 #include "Arduino.h"
-#include <avr/pgmspace.h>
 #include <Wire.h>
 #include "Adafruit_GFX.h"
 #include "FlowSerialRead.h"

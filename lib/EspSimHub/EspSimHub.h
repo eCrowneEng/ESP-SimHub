@@ -1,4 +1,6 @@
-#include <ESP8266WiFi.h>
+#pragma once
+#include <BoardDefs.h>
+#include <BoardWifi.h>
 
 // Fake an Arduino Mega
 #define SIGNATURE_0 0x1E
