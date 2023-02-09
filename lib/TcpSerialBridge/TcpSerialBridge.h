@@ -10,22 +10,23 @@
 #define StreamWrite outgoingStream.write
 #define StreamPrint outgoingStream.print
 
-class TcpSerialBridge {
-  public:
-    TcpSerialBridge(
-        uint16_t tcpPort,
-        Stream *outgoingStream,
-        Stream *incomingStream,
-        bool debug
-        );
-    void setup(bool resetWiFiSettings);
-    void loop(bool startConfigPortalAgain);
-  private:
-    WiFiManager wifiManager;
-    WiFiServer server;
-    WiFiClient client;
-    String ssid;
-    Stream *outgoingStream;
-    Stream *incomingStream;
-    bool debug;
+class TcpSerialBridge
+{
+public:
+  TcpSerialBridge(
+      uint16_t tcpPort,
+      Stream *outgoingStream,
+      Stream *incomingStream,
+      bool debug);
+  void setup(bool resetWiFiSettings);
+  void loop(bool startConfigPortalAgain);
+
+private:
+  WiFiManager wifiManager;
+  WiFiServer server;
+  WiFiClient client;
+  String ssid;
+  Stream *outgoingStream;
+  Stream *incomingStream;
+  bool debug;
 };

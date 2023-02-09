@@ -2,7 +2,6 @@
 #include <map>
 #include <stdexcept>
 
-
 double frequency;
 #ifdef ESP32
 int currentChannel = 0;
@@ -26,7 +25,7 @@ public:
 #endif
     }
 
-    void pwm(char pin, unsigned int duty) __attribute__((always_inline)) 
+    void pwm(char pin, unsigned int duty) __attribute__((always_inline))
     {
 #ifdef ESP32
         // While I don't love all of this, it may be ok because it's only for the esp32
@@ -40,11 +39,15 @@ public:
         // Ultimately, this will depend on actual performance
 
         int existingChannel;
-        try {
+        try
+        {
             existingChannel = pinToChannel.at(pin);
-        } catch (const std::out_of_range& oor) {
+        }
+        catch (const std::out_of_range &oor)
+        {
             int newChannel = currentChannel++;
-            if (newChannel > 15) {
+            if (newChannel > 15)
+            {
                 throw std::out_of_range("too many pwm channels");
             }
             ledcSetup(newChannel, frequency, 10);
