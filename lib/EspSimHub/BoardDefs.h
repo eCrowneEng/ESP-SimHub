@@ -3,7 +3,7 @@
 
 // Here are a bunch of definitions: https://github.com/espressif/arduino-esp32/tree/master/variants
 //  each manufacturer calls each pin different
-// 
+//
 // The goal of having this here, is to avoid compilation errors and to centralize a mapping
 //  from here, you may correct errors or reconfigure the meaning of these aliases
 //
@@ -20,7 +20,7 @@ static const uint D7 = 14;
 static const uint D8 = 15;
 static const uint D9 = 16;
 static const uint D10 = 17;
-static const uint D11 = 35; 
+static const uint D11 = 35;
 static const uint D12 = 18;
 static const uint D13 = 20;
 static const uint D14 = 25;

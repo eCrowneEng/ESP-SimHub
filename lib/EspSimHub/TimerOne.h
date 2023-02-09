@@ -1,11 +1,11 @@
 #include <Arduino.h>
-#include <map>
 #include <stdexcept>
 
 double frequency;
 #ifdef ESP32
 int currentChannel = 0;
-std::map<char, int> pinToChannel{};
+// 44 is the maximum pin number we support for pwm, if you need higher, just allocate more and add more initializers
+int pinToChannel[44] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 #endif
 
 // Fake TimerOne used for Arduinos that may not be necessary for ESP
@@ -28,22 +28,9 @@ public:
     void pwm(char pin, unsigned int duty) __attribute__((always_inline))
     {
 #ifdef ESP32
-        // While I don't love all of this, it may be ok because it's only for the esp32
-        //  in theory the map access here has logarithmic performance based on the size
-        //  which means it's not O(1) as if we didn't have to map pins to channels. Also,
-        //  there will be at most 16 pwm channels
-        // Alternatively, we could create allocate an array of the size of the maximum pin
-        //  number, and store the channel in that array, so that we can request the position
-        //  in the array of the pin being allocated to a channel, that way access is faster
-        //  but we use more memory
-        // Ultimately, this will depend on actual performance
-
         int existingChannel;
-        try
-        {
-            existingChannel = pinToChannel.at(pin);
-        }
-        catch (const std::out_of_range &oor)
+        existingChannel = pinToChannel[(int)pin];
+        if (existingChannel < 0)
         {
             int newChannel = currentChannel++;
             if (newChannel > 15)
