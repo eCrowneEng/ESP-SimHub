@@ -22,11 +22,13 @@ public:
   void loop(bool startConfigPortalAgain);
 
 private:
+  void onFirstConnection();
   WiFiManager wifiManager;
   WiFiServer server;
   WiFiClient client;
   String ssid;
   Stream *outgoingStream;
   Stream *incomingStream;
+  bool firstConnectionDone;
   bool debug;
 };

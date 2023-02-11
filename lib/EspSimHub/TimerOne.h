@@ -33,6 +33,7 @@ public:
         if (existingChannel < 0)
         {
             int newChannel = currentChannel++;
+            pinToChannel[(int)pin] = newChannel;
             if (newChannel > 15)
             {
                 throw std::out_of_range("too many pwm channels");

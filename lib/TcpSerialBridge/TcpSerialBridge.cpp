@@ -2,8 +2,6 @@
 #include <WiFiManager.h>
 #include <TcpSerialBridge.h>
 
-#define MAX_PENDING_CLIENTS_PER_PORT 1
-
 void assertConnected(boolean connected)
 {
 	if (!connected)
@@ -21,7 +19,6 @@ TcpSerialBridge::TcpSerialBridge(
 	bool debug) : server(tcpPort)
 {
 	WiFiManager wifiManager;
-	WiFiClient serverClient();
 	ssid = "SHC-" + WiFi.macAddress();
 	this->outgoingStream = outgoingStream;
 	this->incomingStream = incomingStream;
@@ -50,7 +47,6 @@ void TcpSerialBridge::setup(bool resetWiFiSettings)
 	{
 		Serial.println("Wifi is known and connected");
 	}
-
 	server.begin();
 	server.setNoDelay(true);
 };
@@ -71,6 +67,7 @@ void TcpSerialBridge::loop(bool startConfigPortalAgain)
 	// Check if there are any new clients
 	if (server.hasClient())
 	{
+		client = server.available();
 		if (client && !client.connected())
 		{
 			if (debug)
@@ -78,10 +75,6 @@ void TcpSerialBridge::loop(bool startConfigPortalAgain)
 				Serial.println("client disconnected");
 			}
 			client.stop();
-		}
-		if (debug)
-		{
-			Serial.println("client connected");
 		}
 	}
 	else
@@ -101,6 +94,11 @@ void TcpSerialBridge::loop(bool startConfigPortalAgain)
 	bool clientConnected = (client && client.connected());
 	if (clientConnected)
 	{
+		if (!firstConnectionDone)
+		{
+			firstConnectionDone = true;
+			onFirstConnection();
+		}
 		if (client.available())
 		{
 			// if client data is available in tcp server
@@ -128,8 +126,14 @@ void TcpSerialBridge::loop(bool startConfigPortalAgain)
 		{
 			// write all data to client in one go
 			client.write(sbuf, availableLength);
-			//  just to be safe
-			delay(1);
 		}
+	}
+}
+
+void TcpSerialBridge::onFirstConnection()
+{
+	if (debug)
+	{
+		Serial.println("Client connected");
 	}
 }
