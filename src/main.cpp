@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
-#define INCLUDE_WIFI true
+#define INCLUDE_WIFI false
 
 
 #if INCLUDE_WIFI

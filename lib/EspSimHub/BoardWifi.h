@@ -1,3 +1,5 @@
+#include <BoardDefs.h>
+
 #ifdef ESP32
 #include <WiFi.h>
 #else

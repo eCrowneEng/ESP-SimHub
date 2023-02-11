@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EspSimHub.h>
 #include <stdexcept>
 
 double frequency;
@@ -20,7 +21,7 @@ public:
         // convert amplitude in microseconds to frequency
         frequency = (double)1 / microseconds * 1000000;
 #ifdef ESP8266
-        analogWriteFreq(freq);
+        analogWriteFreq(frequency);
         // set duty cycle range from 0 to 1023, per requirement of simhub params (10 bit)
         analogWriteRange(1023);
 #endif
@@ -44,7 +45,8 @@ public:
         }
         // 10 bits resolution
         ledcWrite(existingChannel, duty);
-#else
+#endif
+#ifdef ESP8266
         // write duty cycle
         analogWrite(pin, duty);
 #endif
