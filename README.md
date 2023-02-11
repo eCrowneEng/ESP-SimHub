@@ -30,7 +30,7 @@ the serial port) and we allow the modified Arduino SimHub client to consume it f
 Set the [preprocessor directive](https://cplusplus.com/doc/tutorial/preprocessor/) called INCLUDE_WIFI to true (in src/main.cpp). Set TCP_DEBUG to true as well, and set `monitor_speed = 115200` in `platformio.ini`.
 
 ## How to connect the ESP to your WiFi
-Upload a WiFi enabled firmware. Connect USB to computer and open the serial monitor with `115200` baud rate (to catch debug messages). Power the ESP up. It will itself create a new WiFi network (SHC-{a bunch of letters and numbers}) that you can connect to from your phone or computer. Connect and expect a [captive portal](https://en.wikipedia.org/wiki/Captive_portal). Pick the option to "scan".. scan the available WiFi networks, pick the one you want to connect to and proceed.
+Upload a [WiFi enabled](https://github.com/eCrowneEng/ESP-SimHub/blob/main/src/main.cpp#L4) firmware. Connect USB to computer and open the serial monitor with `115200` baud rate (to catch debug messages). Power the ESP up. It will itself create a new WiFi network (SHC-{a bunch of letters and numbers}) that you can connect to from your phone or computer. Connect and expect a [captive portal](https://en.wikipedia.org/wiki/Captive_portal). Pick the option to "scan".. scan the available WiFi networks, pick the one you want to connect to and proceed.
 
 Once the ESP is connected to a network, it won't create its own. The device should output the IP address it's using, write it down, you'll need it.
 
