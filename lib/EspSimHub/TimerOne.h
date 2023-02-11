@@ -5,6 +5,7 @@ double frequency;
 #ifdef ESP32
 int currentChannel = 0;
 // 44 is the maximum pin number we support for pwm, if you need higher, just allocate more and add more initializers
+//  it has to be initialized as -1, because 0 is a valid channel
 int pinToChannel[44] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 #endif
 
