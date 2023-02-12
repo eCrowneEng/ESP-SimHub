@@ -1,4 +1,4 @@
-# SimHub firmware for ESP8266
+# SimHub firmware for ESP8266 and ESP32
 
 Head over to the discord server to discuss this firmware: https://discord.gg/zw377qhj9c 
 
