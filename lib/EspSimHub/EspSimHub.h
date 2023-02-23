@@ -14,7 +14,4 @@
 //  in the future we could use the bytes to generate some
 //  other format (ala UUID), but now it's just a unique
 //  string tied to the device.
-String getUniqueId()
-{
-    return WiFi.macAddress();
-}
+String getUniqueId();

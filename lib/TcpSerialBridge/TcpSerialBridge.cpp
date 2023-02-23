@@ -20,7 +20,7 @@ TcpSerialBridge::TcpSerialBridge(
 	bool debug) : server(tcpPort)
 {
 	WiFiManager wifiManager;
-	ssid = "SHC-" + WiFi.macAddress();
+	ssid = "SHC-" + getUniqueId();
 	this->outgoingStream = outgoingStream;
 	this->incomingStream = incomingStream;
 	this->debug = debug;
