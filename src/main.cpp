@@ -21,18 +21,6 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 // J revision sketch
 #define VERSION 'j'
 
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
-// ----------------------------------------------------- PLEASE USE SETUP ASSISTANT AVAILABLE IN SUB FOLDER !!!! -------------------------------------------
 
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
