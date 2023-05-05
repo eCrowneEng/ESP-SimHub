@@ -1,20 +1,21 @@
 #ifndef _SHMATRIXMAX7219_H__
 #define _SHMATRIXMAX7219_H__
 #include <Arduino.h>
-#include "SHLedControl.h"
+#include <MD_MAX72xx.h>
+
+#define HARDWARE_TYPE MD_MAX72XX::GENERIC_HW
 
 class SHMatrixMAX7219 {
 private:
-
-	SHLedControl  MAX7221;
+	MD_MAX72XX mx;
 	byte MAX7221_MATRIX_LUMINOSITY = 0;
 public:
 
-	void begin(int DataPin, int ClkPin, int LoadPin) {
-		MAX7221.begin(DataPin, ClkPin, LoadPin, 1);
-		MAX7221.shutdown(0, false);
-		MAX7221.setIntensity(0, 0);
-		MAX7221.clearDisplay(0);
+	SHMatrixMAX7219(int DataPin, int ClkPin, int CsPin) : mx(HARDWARE_TYPE, CsPin, 1) {}
+
+	void begin() {
+		mx.begin();
+		mx.clear(0, 1);
 	}
 
 	void read()
@@ -22,12 +23,12 @@ public:
 		// Wait for display data
 		int newIntensity = FlowSerialTimedRead();
 		if (newIntensity != MAX7221_MATRIX_LUMINOSITY) {
-			MAX7221.setIntensity(0, min(15,newIntensity));
+			mx.control(MD_MAX72XX::INTENSITY, min(MAX_INTENSITY, newIntensity));
 			MAX7221_MATRIX_LUMINOSITY = newIntensity;
 		}
 
 		for (int j = 0; j < 8; j++) {
-			MAX7221.setRow(0, 7 - j, FlowSerialTimedRead());
+			mx.setRow(7-j, FlowSerialTimedRead());
 		}
 	}
 };
