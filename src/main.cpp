@@ -49,9 +49,8 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 //#define INCLUDE_SHAKEITL298N                //{"Name":"INCLUDE_SHAKEITL298N","Type":"autodefine","Condition":"[L98NMOTORS_ENABLED]>0"}
 //#define INCLUDE_SHAKEITMOTOMONSTER          //{"Name":"INCLUDE_SHAKEITMOTOMONSTER","Type":"autodefine","Condition":"[MOTOMONSTER_ENABLED]>0"}
 //#define INCLUDE_SHAKEIDUALVNH5019           //{"Name":"INCLUDE_SHAKEIDUALVNH5019","Type":"autodefine","Condition":"[DUALVNH5019_ENABLED]>0"}
-
 //#define INCLUDE_SHAKEITPWM                  //{"Name":"INCLUDE_SHAKEITPWM","Type":"autodefine","Condition":"[SHAKEITPWM_ENABLED_MOTORS]>0"}
-#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
+//#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
 #if defined (__AVR_ATmega32U4__)
 //#define INCLUDE_GAMEPAD                     //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
 #endif
@@ -205,10 +204,11 @@ SHMAX72217Segment shMAX72217Segment;
 #define MAX7221_MATRIX_ENABLED 0 //{"Group":"MAX7221 Led Matrix","Name":"MAX7221_MATRIX_ENABLED","Title":"MAX7221 led matrix enabled ","DefaultValue":"0","Type":"bool"}
 #ifdef INCLUDE_MAX7221MATRIX
 #include "SHMatrixMAX7219.h"
-#define MAX7221_MATRIX_DATA 3    //{"Name":"MAX7221_MATRIX_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 Matrix DATA","Condition":"MAX7221_MATRIX_ENABLED>0"}
-#define MAX7221_MATRIX_CLK 5     //{"Name":"MAX7221_MATRIX_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 Matrix CLK","Condition":"MAX7221_MATRIX_ENABLED>0"}
-#define MAX7221_MATRIX_LOAD 4    //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
-SHMatrixMAX7219 shMatrixMAX7219;
+// Hardware SPI for NodeMCU as example, modify as you see fit for your specific board
+#define MAX7221_MATRIX_DATA D7    //{"Name":"MAX7221_MATRIX_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 Matrix DATA","Condition":"MAX7221_MATRIX_ENABLED>0"}
+#define MAX7221_MATRIX_CLK D5     //{"Name":"MAX7221_MATRIX_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 Matrix CLK","Condition":"MAX7221_MATRIX_ENABLED>0"}
+#define MAX7221_MATRIX_LOAD D8    //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
+SHMatrixMAX7219 shMatrixMAX7219(MAX7221_MATRIX_DATA, MAX7221_MATRIX_CLK, MAX7221_MATRIX_LOAD);
 #endif
 
 // --------------------------------------------------------------------------------------------------------
@@ -1139,7 +1139,7 @@ void setup()
 #endif
 
 #ifdef INCLUDE_MAX7221MATRIX
-	shMatrixMAX7219.begin(MAX7221_MATRIX_DATA, MAX7221_MATRIX_CLK, MAX7221_MATRIX_LOAD);
+	shMatrixMAX7219.begin();
 #endif
 
 	// 74HC595 INIT

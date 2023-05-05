@@ -26,6 +26,10 @@
 #include <WProgram.h>
 #endif
 
+/**
+ * This class may not work or require some tweaking for the ESP
+ * We're bypassing it directly in SHMatrixMAX7219.h
+ */
 class SHLedControl {
 private:
 	/* The array for shifting the data to the devices */
@@ -221,7 +225,6 @@ public:
 		volatile uint32_t *out;
 
 		out = portOutputRegister(port);
-
 		if (val == LOW) {
 			*out &= ~bit;
 		}
