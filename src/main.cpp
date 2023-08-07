@@ -191,9 +191,10 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 #define MAX7221_ENABLEDMODULES 0 //{"Group":"MAX7221 7 Segments Modules","Name":"MAX7221_ENABLEDMODULES","Title":"MAX7219 / MAX7221 7 Segment modules connected \r\nMultiple modules can be cascaded connected module output to next module input","DefaultValue":"0","Type":"int","Max":8}
 #ifdef INCLUDE_MAX7221_MODULES
 #include "SHMAX72217Segment.h"
-#define MAX7221_DATA 3           //{"Name":"MAX7221_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 7seg. DATA","Condition":"MAX7221_ENABLEDMODULES > 0"}
-#define MAX7221_CLK 5            //{"Name":"MAX7221_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 7seg. CLK","Condition":"MAX7221_ENABLEDMODULES > 0"}
-#define MAX7221_LOAD 4           //{"Name":"MAX7221_LOAD","Title":"LOAD (LD) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 7seg. LOAD/LD","Condition":"MAX7221_ENABLEDMODULES > 0"}
+// USING HARDWARE SPI BY DEFAULT (MOSI, SCK)
+#define MAX7221_DATA MOSI        //{"Name":"MAX7221_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 7seg. DATA","Condition":"MAX7221_ENABLEDMODULES > 0"}
+#define MAX7221_CLK SCK          //{"Name":"MAX7221_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 7seg. CLK","Condition":"MAX7221_ENABLEDMODULES > 0"}
+#define MAX7221_LOAD 13          //{"Name":"MAX7221_LOAD","Title":"LOAD (LD) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 7seg. LOAD/LD","Condition":"MAX7221_ENABLEDMODULES > 0"}
 SHMAX72217Segment shMAX72217Segment;
 #endif // INCLUDE_MAX7221_MODULES
 
@@ -204,11 +205,11 @@ SHMAX72217Segment shMAX72217Segment;
 #define MAX7221_MATRIX_ENABLED 0 //{"Group":"MAX7221 Led Matrix","Name":"MAX7221_MATRIX_ENABLED","Title":"MAX7221 led matrix enabled ","DefaultValue":"0","Type":"bool"}
 #ifdef INCLUDE_MAX7221MATRIX
 #include "SHMatrixMAX7219.h"
-// Hardware SPI for NodeMCU as example, modify as you see fit for your specific board
-#define MAX7221_MATRIX_DATA D7    //{"Name":"MAX7221_MATRIX_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 Matrix DATA","Condition":"MAX7221_MATRIX_ENABLED>0"}
-#define MAX7221_MATRIX_CLK D5     //{"Name":"MAX7221_MATRIX_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 Matrix CLK","Condition":"MAX7221_MATRIX_ENABLED>0"}
-#define MAX7221_MATRIX_LOAD D8    //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
-SHMatrixMAX7219 shMatrixMAX7219(MAX7221_MATRIX_DATA, MAX7221_MATRIX_CLK, MAX7221_MATRIX_LOAD);
+// USING HARDWARE SPI BY DEFAULT (MOSI, SCK)
+#define MAX7221_MATRIX_DATA MOSI    //{"Name":"MAX7221_MATRIX_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 Matrix DATA","Condition":"MAX7221_MATRIX_ENABLED>0"}
+#define MAX7221_MATRIX_CLK SCK      //{"Name":"MAX7221_MATRIX_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 Matrix CLK","Condition":"MAX7221_MATRIX_ENABLED>0"}
+#define MAX7221_MATRIX_LOAD 13      //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
+SHMatrixMAX7219 shMatrixMAX7219;
 #endif
 
 // --------------------------------------------------------------------------------------------------------
@@ -1139,7 +1140,7 @@ void setup()
 #endif
 
 #ifdef INCLUDE_MAX7221MATRIX
-	shMatrixMAX7219.begin();
+	shMatrixMAX7219.begin(MAX7221_MATRIX_DATA, MAX7221_MATRIX_CLK, MAX7221_MATRIX_LOAD);
 #endif
 
 	// 74HC595 INIT

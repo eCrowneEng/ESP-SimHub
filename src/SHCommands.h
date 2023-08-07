@@ -286,7 +286,6 @@ void Command_Shutdown() {
 }
 
 void Command_7SegmentsData() {
-
 #ifdef INCLUDE_TM1637
 	// TM1637
 	for (int j = 0; j < TM1637_ENABLEDMODULES; j++) {
