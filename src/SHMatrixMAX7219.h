@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <LedController.hpp>
 
-
 class SHMatrixMAX7219 {
 private:
 	byte MAX7221_MATRIX_LUMINOSITY = 0;
