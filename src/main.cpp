@@ -1,18 +1,17 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
-
-#define INCLUDE_WIFI false
+#define INCLUDE_WIFI 1
 
 
 #if INCLUDE_WIFI
-#define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
-#define DEBUG_TCP_BRIDGE true
+#define BRIDGE_PORT 1212 // Perle TruePort uses port 10,001 for the first serial routed to the client
+#define DEBUG_TCP_BRIDGE 1
 
 #include <TcpSerialBridge.h>
 #include <FullLoopbackStream.h>
 
-FullLoopbackStream outgoingStream;
-FullLoopbackStream incomingStream;
+FullLoopbackStream outgoingStream(256);
+FullLoopbackStream incomingStream(256);
 TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_BRIDGE);
 
 #endif // INCLUDE_WIFI
@@ -24,9 +23,9 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
-//#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
+#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_PL9823                      //{"Name":"INCLUDE_PL9823","Type":"autodefine","Condition":"[PL9823_RGBLEDCOUNT]>0"}
-//#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
+#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
 //#define INCLUDE_LEDBACKPACK                 //{"Name":"INCLUDE_LEDBACKPACK","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_7SEGMENTS]>0 || [ENABLE_ADA_HT16K33_BiColorMatrix]>0"}
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
 //#define INCLUDE_TM1637_6D                   //{"Name":"INCLUDE_TM1637_6D","Type":"autodefine","Condition":"[TM1637_6D_ENABLEDMODULES]>0"}
@@ -234,10 +233,10 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 // -------------------------------------------------------------------------------------------------------
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
+#define WS2812B_RGBLEDCOUNT 12        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
-#define WS2812B_DATAPIN 6            //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
+#define WS2812B_DATAPIN 14           //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_RGBENCODING 0        //{"Name":"WS2812B_RGBENCODING","Title":"WS2812B RGB encoding\r\nSet to 0 for GRB, 1 for RGB encoding, 2 for BRG encoding","DefaultValue":"0","Type":"list","Condition":"WS2812B_RGBLEDCOUNT>0","ListValues":"0,GRB encoding;1,RGB encoding;2,BRG encoding"}
 #define WS2812B_RIGHTTOLEFT 0        //{"Name":"WS2812B_RIGHTTOLEFT","Title":"Reverse led order ","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_TESTMODE 0           //{"Name":"WS2812B_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
@@ -293,11 +292,11 @@ SHRGBLedsWS2801 shRGBLedsWS2801;
 // -------------------------------------------------------------------------------------------------------
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_MATRIX_ENABLED 0                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
+#define WS2812B_MATRIX_ENABLED 1                //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
 
 #ifdef INCLUDE_WS2812B_MATRIX
-#define WS2812B_MATRIX_DATAPIN 6                 //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
-#define WS2812B_MATRIX_SERPENTINELAYOUT 0        //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#define WS2812B_MATRIX_DATAPIN 12                 //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#define WS2812B_MATRIX_SERPENTINELAYOUT 1       //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
 #define WS2812B_MATRIX_SERPENTINELAYOUTREVERSE 0 //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUTREVERSE","Title":"Reverse serpentine layout start direction","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0 && WS2812B_MATRIX_SERPENTINELAYOUT>0"}
 
 #include "SHRGBMatrixNeoPixelFastLed.h"
@@ -758,7 +757,7 @@ SHShakeitPWM shShakeitPWM;
 // -------------------- SHAKEIT PWM FANS OUTPUT ----------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-Shake-It
 // --------------------------------------------------------------------------------------------------------
-#define SHAKEITPWMFANS_ENABLED_MOTORS 3        //{"Group":"SHAKEIT PWM FANS Outputs","Name":"SHAKEITPWMFANS_ENABLED_MOTORS","Title":"ShakeIT direct PWM fans enabled (25khz PWM)\r\nArduino Uno : pins 9 or 10\r\nArduino Leonardo pins : 9, 10 or 11\r\nArduino Mega pins : 11, 12 or 13","DefaultValue":"0","Type":"int","Max":3}
+#define SHAKEITPWMFANS_ENABLED_MOTORS 0        //{"Group":"SHAKEIT PWM FANS Outputs","Name":"SHAKEITPWMFANS_ENABLED_MOTORS","Title":"ShakeIT direct PWM fans enabled (25khz PWM)\r\nArduino Uno : pins 9 or 10\r\nArduino Leonardo pins : 9, 10 or 11\r\nArduino Mega pins : 11, 12 or 13","DefaultValue":"0","Type":"int","Max":3}
 
 #ifdef INCLUDE_SHAKEITPWMFANS
 #define SHAKEITPWMFANS_O1 D2                    //{"Name":"SHAKEITPWMFANS_O1","Title":"PWM Output 1 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM Fan 1","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1"}
@@ -1064,8 +1063,24 @@ void buttonMatrixStatusChanged(int buttonId, byte Status) {
 }
 #endif
 
+
+
+void wifi32 (void* pvParameters)
+{
+  while (1) 
+  {
+	bridge.loop(/* startWifiConfigPortalAgain */ false);
+  }
+}
+
 void setup()
 {
+#ifdef ESP8266
+	analogWriteFreq(5000);
+#endif
+
+	
+
 #if INCLUDE_WIFI
 #if DEBUG_TCP_BRIDGE
 	Serial.begin(115200);
@@ -1073,7 +1088,20 @@ void setup()
 #endif
 
 #if INCLUDE_WIFI
-	bridge.setup(/* resetSavedWifiSettings */ false);
+	//#ifdef ESP32
+	//	xTaskCreatePinnedToCore 
+	//	(
+	//		wifi32init,     // Function to implement the task
+	//		"wifi32init",   // Name of the task
+	//		2000,      // Stack size in bytes
+	//		NULL,      // Task input parameter
+	//		0,         // Priority of the task
+	//		NULL,      // Task handle.
+	//		1          // Core where the task should run
+	//	);
+	//#else
+		bridge.setup(/* resetSavedWifiSettings */ false);
+	//#endif
 #endif
 
 	//#ifdef INCLUDE_TEMPGAUGE
@@ -1083,8 +1111,9 @@ void setup()
 #ifdef INCLUDE_FUELGAUGE
 	shFUELPIN.SetValue((int)80);
 #endif
-
-	FlowSerialBegin(19200);
+	
+	FlowSerialBegin(115200);
+	//FlowSerialBegin(19200);
 
 #ifdef INCLUDE_GAMEPAD
 	Joystick.begin(false);
@@ -1261,7 +1290,26 @@ void setup()
 #ifdef INCLUDE_GAMEPAD
 	Joystick.sendState();
 #endif
+
+
+
+#ifdef ESP32
+	#if INCLUDE_WIFI
+	  xTaskCreatePinnedToCore 
+	  (
+    	wifi32,     // Function to implement the task
+    	"wifi32",   // Name of the task
+    	5120,      // Stack size in bytes
+    	NULL,      // Task input parameter
+    	1,         // Priority of the task
+    	NULL,      // Task handle.
+    	1          // Core where the task should run
+  		);
+	#endif
+#endif
+
 }
+
 
 #ifdef  INCLUDE_ENCODERS
 void InitEncoders() {
@@ -1322,8 +1370,10 @@ char loop_opt;
 unsigned long lastSerialActivity = 0;
 
 void loop() {
-#if INCLUDE_WIFI
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
+#ifdef ESP8266	
+	#if INCLUDE_WIFI
+		bridge.loop(/* startWifiConfigPortalAgain */ false);
+	#endif
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
@@ -1400,3 +1450,5 @@ void loop() {
 		Command_Shutdown();
 	}
 }
+
+
