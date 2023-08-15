@@ -9,7 +9,8 @@
 
 // Configure FASTLED with proper pin order
 #define FASTLED_ESP8266_NODEMCU_PIN_ORDER
-
+#define FASTLED_ALLOW_INTERRUPTS 0
+//#define FASTLED_INTERRUPT_RETRY_COUNT 1
 // A unique identifier for the device.
 //  in the future we could use the bytes to generate some
 //  other format (ala UUID), but now it's just a unique

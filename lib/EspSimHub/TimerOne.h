@@ -19,11 +19,10 @@ public:
     void initialize(unsigned long microseconds = 1000000) __attribute__((always_inline))
     {
         // convert amplitude in microseconds to frequency
-        frequency = (double)1 / microseconds * 1000000;
-#ifdef ESP8266
-        analogWriteFreq(frequency);
-        // set duty cycle range from 0 to 1023, per requirement of simhub params (10 bit)
-        analogWriteRange(1023);
+        //frequency = (double)1 / microseconds * 1000000;
+		
+#ifdef ESP32
+   frequency = 5000;
 #endif
     }
 
