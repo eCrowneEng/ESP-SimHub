@@ -1,7 +1,7 @@
 #ifndef __SHRGBLEDSNEOPIXELFASTLED_H__
 #define __SHRGBLEDSNEOPIXELFASTLED_H__
 #define FASTLED_ALLOW_INTERRUPTS 0
-
+#define FASTLED_INTERRUPT_RETRY_COUNT 0
 
 #include <Arduino.h>
 #include "SHRGBLedsBase.h"
@@ -17,19 +17,20 @@ public:
 
 	void begin(int maxLeds, int righttoleft, bool testMode) {
 		SHRGBLedsBase::begin(maxLeds, righttoleft);
+		FastLED.setCorrection(TypicalLEDStrip);
 		FastLED.addLeds<NEOPIXEL, WS2812B_DATAPIN>(SHRGBLedsNeoPixelFastLeds_leds, maxLeds);
-
 		if (testMode > 0) {
 			for (int i = 0; i < maxLeds; i++) {
 				setPixelColor(i, 255, 0, 0);
 			}
 		}
-		FastLED.show();
+		show();
 	}
 
 	void show() {
+		yield();
 		FastLED.show();
-		//delay(10);
+		yield();
 	}
 
 protected:
