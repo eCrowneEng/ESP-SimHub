@@ -2,8 +2,6 @@
 #include <EspSimHub.h>
 
 #define INCLUDE_WIFI false
-
-
 #if INCLUDE_WIFI
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
 #define DEBUG_TCP_BRIDGE true
@@ -240,7 +238,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 #define WS2812B_DATAPIN 6            //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_RGBENCODING 0        //{"Name":"WS2812B_RGBENCODING","Title":"WS2812B RGB encoding\r\nSet to 0 for GRB, 1 for RGB encoding, 2 for BRG encoding","DefaultValue":"0","Type":"list","Condition":"WS2812B_RGBLEDCOUNT>0","ListValues":"0,GRB encoding;1,RGB encoding;2,BRG encoding"}
 #define WS2812B_RIGHTTOLEFT 0        //{"Name":"WS2812B_RIGHTTOLEFT","Title":"Reverse led order ","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
-#define WS2812B_TESTMODE 0           //{"Name":"WS2812B_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
+#define WS2812B_TESTMODE 1           //{"Name":"WS2812B_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_USEADAFRUITLIBRARY 0 //{"Name":"WS2812B_USEADAFRUITLIBRARY","Title":"ADVANCED : Use legacy adafruit library (only enable if you have sketch size issues)","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
 
 #if(WS2812B_USEADAFRUITLIBRARY == 0)
@@ -953,6 +951,16 @@ SHCustomProtocol shCustomProtocol;
 #include "SHCommandsGlcd.h"
 unsigned long lastMatrixRefresh = 0;
 
+#if INCLUDE_WIFI
+void esp32WifiLoop (void* pvParameters)
+{
+  while (1) 
+  {
+	bridge.loop(/* startWifiConfigPortalAgain */ false);
+  }
+}
+#endif
+
 void idle(bool critical) {
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
@@ -1261,6 +1269,21 @@ void setup()
 #ifdef INCLUDE_GAMEPAD
 	Joystick.sendState();
 #endif
+
+#ifdef ESP32
+#if INCLUDE_WIFI
+	// wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
+	xTaskCreatePinnedToCore(
+		esp32WifiLoop,     	// Function to implement the task
+		"esp32WifiLoop",   	// Name of the task
+		5120,      			// Stack size in bytes
+		NULL,      			// Task input parameter
+		tskIDLE_PRIORITY,   // Priority of the task
+		NULL,      			// Task handle.
+		0          			// Core where the task should run
+	);
+#endif
+#endif
 }
 
 #ifdef  INCLUDE_ENCODERS
@@ -1315,15 +1338,18 @@ void UpdateGamepadEncodersState(bool sendState) {
 		Joystick.sendState();
 }
 #endif
-
 #endif
 
 char loop_opt;
 unsigned long lastSerialActivity = 0;
 
+
 void loop() {
 #if INCLUDE_WIFI
+#if ESP8266
+	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
 	bridge.loop(/* startWifiConfigPortalAgain */ false);
+#endif
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
