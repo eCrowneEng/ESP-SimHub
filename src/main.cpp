@@ -232,7 +232,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 // -------------------------------------------------------------------------------------------------------
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_RGBLEDCOUNT 24        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
+#define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
 #define WS2812B_DATAPIN GPIO_NUM_33  //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
@@ -962,6 +962,12 @@ void esp32WifiLoop (void* pvParameters)
 #endif
 
 void idle(bool critical) {
+#if INCLUDE_WIFI
+#ifdef ESP8266
+	// wifi runs twice on the ESP8266 (loop + idle).. but the ESP32 uses a separate core.
+	bridge.loop(/* startWifiConfigPortalAgain */ false);
+#endif
+#endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
 	SHGAMEPADAXIS01.read();
