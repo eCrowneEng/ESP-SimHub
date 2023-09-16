@@ -235,7 +235,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 #define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
-#define WS2812B_DATAPIN 6            //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
+#define WS2812B_DATAPIN GPIO_NUM_33  //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_RGBENCODING 0        //{"Name":"WS2812B_RGBENCODING","Title":"WS2812B RGB encoding\r\nSet to 0 for GRB, 1 for RGB encoding, 2 for BRG encoding","DefaultValue":"0","Type":"list","Condition":"WS2812B_RGBLEDCOUNT>0","ListValues":"0,GRB encoding;1,RGB encoding;2,BRG encoding"}
 #define WS2812B_RIGHTTOLEFT 0        //{"Name":"WS2812B_RIGHTTOLEFT","Title":"Reverse led order ","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_TESTMODE 1           //{"Name":"WS2812B_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
@@ -962,6 +962,12 @@ void esp32WifiLoop (void* pvParameters)
 #endif
 
 void idle(bool critical) {
+#if INCLUDE_WIFI
+#ifdef ESP8266
+	// wifi runs twice on the ESP8266 (loop + idle).. but the ESP32 uses a separate core.
+	bridge.loop(/* startWifiConfigPortalAgain */ false);
+#endif
+#endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
 	SHGAMEPADAXIS01.read();
@@ -1341,12 +1347,13 @@ void UpdateGamepadEncodersState(bool sendState) {
 #endif
 
 char loop_opt;
+char xactionc;
 unsigned long lastSerialActivity = 0;
 
 
 void loop() {
 #if INCLUDE_WIFI
-#if ESP8266
+#ifdef ESP8266
 	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
 	bridge.loop(/* startWifiConfigPortalAgain */ false);
 #endif
@@ -1387,38 +1394,40 @@ void loop() {
 			// Read command
 			loop_opt = FlowSerialTimedRead();
 
-			if (loop_opt == '1') Command_Hello();
-			else if (loop_opt == '8') Command_SetBaudrate();
-			else if (loop_opt == 'J') Command_ButtonsCount();
-			else if (loop_opt == '2') Command_TM1638Count();
-			else if (loop_opt == 'B') Command_SimpleModulesCount();
-			else if (loop_opt == 'A') Command_Acq();
-			else if (loop_opt == 'N') Command_DeviceName();
-			else if (loop_opt == 'I') Command_UniqueId();
-			else if (loop_opt == '0') Command_Features();
-			else if (loop_opt == '3') Command_TM1638Data();
-			else if (loop_opt == 'V') Command_Motors();
-			else if (loop_opt == 'S') Command_7SegmentsData();
-			else if (loop_opt == '4') Command_RGBLEDSCount();
-			else if (loop_opt == '6') Command_RGBLEDSData();
-			else if (loop_opt == 'R') Command_RGBMatrixData();
-			else if (loop_opt == 'M') Command_MatrixData();
-			else if (loop_opt == 'G') Command_GearData();
-			else if (loop_opt == 'L') Command_I2CLCDData();
-			else if (loop_opt == 'K') Command_GLCDData(); // Nokia | OLEDS
-			else if (loop_opt == 'P') Command_CustomProtocolData();
-			else if (loop_opt == 'X')
-			{
-				String xaction = FlowSerialReadStringUntil(' ', '\n');
-				if (xaction == F("list")) Command_ExpandedCommandsList();
-				else if (xaction == F("mcutype")) Command_MCUType();
-				else if (xaction == F("tach")) Command_TachData();
-				else if (xaction == F("speedo")) Command_SpeedoData();
-				else if (xaction == F("boost")) Command_BoostData();
-				else if (xaction == F("temp")) Command_TempData();
-				else if (xaction == F("fuel")) Command_FuelData();
-				else if (xaction == F("cons")) Command_ConsData();
-				else if (xaction == F("encoderscount")) Command_EncodersCount();
+			switch(loop_opt) {
+				case '1': Command_Hello(); break;
+				case '8': Command_SetBaudrate(); break;
+				case 'J': Command_ButtonsCount(); break;
+				case '2': Command_TM1638Count(); break;
+				case 'B': Command_SimpleModulesCount(); break;
+				case 'A': Command_Acq(); break;
+				case 'N': Command_DeviceName(); break;
+				case 'I': Command_UniqueId(); break;
+				case '0': Command_Features(); break;
+				case '3': Command_TM1638Data(); break;
+				case 'V': Command_Motors(); break;
+				case 'S': Command_7SegmentsData(); break;
+				case '4': Command_RGBLEDSCount(); break;
+				case '6': Command_RGBLEDSData(); break;
+				case 'R': Command_RGBMatrixData(); break;
+				case 'M': Command_MatrixData(); break;
+				case 'G': Command_GearData(); break;
+				case 'L': Command_I2CLCDData(); break;
+				case 'K': Command_GLCDData();  break; // Nokia | OLEDS
+				case 'P': Command_CustomProtocolData(); break;
+				case 'X':
+					String xaction = FlowSerialReadStringUntil(' ', '\n');
+					if (xaction == F("list")) Command_ExpandedCommandsList();
+					else if (xaction == F("mcutype")) Command_MCUType();
+					else if (xaction == F("tach")) Command_TachData();
+					else if (xaction == F("speedo")) Command_SpeedoData();
+					else if (xaction == F("boost")) Command_BoostData();
+					else if (xaction == F("temp")) Command_TempData();
+					else if (xaction == F("fuel")) Command_FuelData();
+					else if (xaction == F("cons")) Command_ConsData();
+					else if (xaction == F("encoderscount")) Command_EncodersCount();
+				break;
+
 			}
 		}
 	}
