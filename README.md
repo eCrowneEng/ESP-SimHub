@@ -48,4 +48,4 @@ Some Arduino APIs for the ESP32 are different, so not everything will work out o
 ### How to enable ESP32
 - Open `platformio.ini`, comment out the ESP8266 env and Uncomment the ESP32 env. Also specify your board in the env, by default is set to something like `esp32doit-devkit-v1` because I owned this board, but there are tons of boards for the ESP32, as you can see [here](https://docs.platformio.org/en/latest/boards/index.html#espressif-32). Click on one and it will show you what's its id. 
 - Go to `lib/BoardDefs.h` and comment out `#define ESP8266` and uncomment `#define ESP32`.
-- Check the pin definitions in that file, because they will likely not match your board, but this is what the code maps to, feel free to tweak them to your liking. If a pin is defined incorrectly it may cause the ESP to crash, so if you're debugging weird issues, you can remove all of them and tweak the code to use the pin number directly (10, 11, 15...), instead of these aliases (D1, D2, D5.. etc).
+- Make sure to use GPIO_NUM_XX aliases of pins, as opposed to D1, D2, D3.. etc
