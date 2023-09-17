@@ -98,18 +98,18 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 #define TM1638_ENABLEDMODULES 0 //{"Group":"TM1638 7 Segments Modules","Name":"TM1638_ENABLEDMODULES","Title":"TM1638 modules connected","DefaultValue":"0","Type":"int","Max":6}
 #ifdef INCLUDE_TM1638
 #define TM1638_SWAPLEDCOLORS 0  //{"Name":"TM1638_SWAPLEDCOLORS","Title":"Reverse Red and green colors ","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_DIO 8            //{"Name":"TM1638_DIO","Title":"Common data (DIO) digital pin number","DefaultValue":"8","Type":"pin;TM1638 DIO","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_CLK 7            //{"Name":"TM1638_CLK","Title":"Common clock (CLK) digital pin number","DefaultValue":"7","Type":"pin;TM1638 CLK","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_STB1 9           //{"Name":"TM1638_STB1","Title":"1st module strobe (STB0) digital pin number","DefaultValue":"9","Type":"pin;TM1638 STB1","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_SINGLECOLOR1 0   //{"Name":"TM1638_SINGLECOLOR1","Title":"1st module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_DIO D5            //{"Name":"TM1638_DIO","Title":"Common data (DIO) digital pin number","DefaultValue":"8","Type":"pin;TM1638 DIO","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_CLK D6            //{"Name":"TM1638_CLK","Title":"Common clock (CLK) digital pin number","DefaultValue":"7","Type":"pin;TM1638 CLK","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_STB1 D7           //{"Name":"TM1638_STB1","Title":"1st module strobe (STB0) digital pin number","DefaultValue":"9","Type":"pin;TM1638 STB1","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_SINGLECOLOR1 1   //{"Name":"TM1638_SINGLECOLOR1","Title":"1st module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 0"}
 
-#define TM1638_STB2 10          //{"Name":"TM1638_STB2","Title":"2nd module strobe (STB1) digital pin number","DefaultValue":"10","Type":"pin;TM1638 STB2","Condition":"TM1638_ENABLEDMODULES > 1"}
+#define TM1638_STB2 0          //{"Name":"TM1638_STB2","Title":"2nd module strobe (STB1) digital pin number","DefaultValue":"10","Type":"pin;TM1638 STB2","Condition":"TM1638_ENABLEDMODULES > 1"}
 #define TM1638_SINGLECOLOR2 0   //{"Name":"TM1638_SINGLECOLOR2","Title":"2nd module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 1"}
 
-#define TM1638_STB3 11          //{"Name":"TM1638_STB3","Title":"3rd module strobe (STB2) digital pin number","DefaultValue":"11","Type":"pin;TM1638 STB3","Condition":"TM1638_ENABLEDMODULES > 2"}
+#define TM1638_STB3 0          //{"Name":"TM1638_STB3","Title":"3rd module strobe (STB2) digital pin number","DefaultValue":"11","Type":"pin;TM1638 STB3","Condition":"TM1638_ENABLEDMODULES > 2"}
 #define TM1638_SINGLECOLOR3 0   //{"Name":"TM1638_SINGLECOLOR3","Title":"3rd module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 2"}
 
-#define TM1638_STB4 12          //{"Name":"TM1638_STB4","Title":"4th module strobe (STB3) digital pin number","DefaultValue":"12","Type":"pin;TM1638 STB4","Condition":"TM1638_ENABLEDMODULES > 3"}
+#define TM1638_STB4 0          //{"Name":"TM1638_STB4","Title":"4th module strobe (STB3) digital pin number","DefaultValue":"12","Type":"pin;TM1638 STB4","Condition":"TM1638_ENABLEDMODULES > 3"}
 #define TM1638_SINGLECOLOR4 0   //{"Name":"TM1638_SINGLECOLOR4","Title":"4th module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 3"}
 
 #define TM1638_STB5 0           //{"Name":"TM1638_STB5","Title":"5th module strobe (STB4) digital pin number","DefaultValue":"0","Type":"pin;TM1638 STB5","Condition":"TM1638_ENABLEDMODULES > 4"}
@@ -203,10 +203,10 @@ SHMAX72217Segment shMAX72217Segment;
 #define MAX7221_MATRIX_ENABLED 0 //{"Group":"MAX7221 Led Matrix","Name":"MAX7221_MATRIX_ENABLED","Title":"MAX7221 led matrix enabled ","DefaultValue":"0","Type":"bool"}
 #ifdef INCLUDE_MAX7221MATRIX
 #include "SHMatrixMAX7219.h"
-// USING HARDWARE SPI BY DEFAULT (MOSI, SCK)
+// USING HARDWARE SPI BY DEFAULT (MOSI, SCK, SS)
 #define MAX7221_MATRIX_DATA MOSI    //{"Name":"MAX7221_MATRIX_DATA","Title":"DATA (DIN) digital pin number","DefaultValue":"3","Type":"pin;MAX7221 Matrix DATA","Condition":"MAX7221_MATRIX_ENABLED>0"}
 #define MAX7221_MATRIX_CLK SCK      //{"Name":"MAX7221_MATRIX_CLK","Title":"CLOCK (CLK) digital pin number","DefaultValue":"5","Type":"pin;MAX7221 Matrix CLK","Condition":"MAX7221_MATRIX_ENABLED>0"}
-#define MAX7221_MATRIX_LOAD 13      //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
+#define MAX7221_MATRIX_LOAD SS      //{"Name":"MAX7221_MATRIX_LOAD","Title":"LOAD (LD/CS) digital pin number","DefaultValue":"4","Type":"pin;MAX7221 Matrix LOAD/LD","Condition":"MAX7221_MATRIX_ENABLED>0"}
 SHMatrixMAX7219 shMatrixMAX7219;
 #endif
 
@@ -997,7 +997,11 @@ void idle(bool critical) {
 #endif
 #ifdef INCLUDE_TM1638
 		for (int i = 0; i < TM1638_ENABLEDMODULES; i++) {
-			TM1638_screens[i]->Buttons = TM1638_screens[i]->Screen->getButtons();
+			uint32_t allButtons = TM1638_screens[i]->Screen->getButtons();
+			byte k1 = allButtons;
+			byte k2 = allButtons >> 8;
+			byte k3 = allButtons >> 16; // LED&KEY variant uses this byte only
+			TM1638_screens[i]->Buttons = k3; // if your buttons don't work, try other variables
 
 			if (TM1638_screens[i]->Buttons != TM1638_screens[i]->Oldbuttons) {
 				changed = true;

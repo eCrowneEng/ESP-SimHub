@@ -2,6 +2,7 @@
 #define __SHRGBLEDSNEOPIXELFASTLED_H__
 #define FASTLED_ALLOW_INTERRUPTS 0
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
+#define FASTLED_ESP8266_RAW_PIN_ORDER
 
 #include <Arduino.h>
 #include "SHRGBLedsBase.h"
