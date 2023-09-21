@@ -98,9 +98,9 @@ TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_
 #define TM1638_ENABLEDMODULES 0 //{"Group":"TM1638 7 Segments Modules","Name":"TM1638_ENABLEDMODULES","Title":"TM1638 modules connected","DefaultValue":"0","Type":"int","Max":6}
 #ifdef INCLUDE_TM1638
 #define TM1638_SWAPLEDCOLORS 0  //{"Name":"TM1638_SWAPLEDCOLORS","Title":"Reverse Red and green colors ","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_DIO GPIO_NUM_25  //{"Name":"TM1638_DIO","Title":"Common data (DIO) digital pin number","DefaultValue":"8","Type":"pin;TM1638 DIO","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_CLK GPIO_NUM_26  //{"Name":"TM1638_CLK","Title":"Common clock (CLK) digital pin number","DefaultValue":"7","Type":"pin;TM1638 CLK","Condition":"TM1638_ENABLEDMODULES > 0"}
-#define TM1638_STB1 GPIO_NUM_27 //{"Name":"TM1638_STB1","Title":"1st module strobe (STB0) digital pin number","DefaultValue":"9","Type":"pin;TM1638 STB1","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_DIO 25  			//{"Name":"TM1638_DIO","Title":"Common data (DIO) digital pin number","DefaultValue":"8","Type":"pin;TM1638 DIO","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_CLK 26  			//{"Name":"TM1638_CLK","Title":"Common clock (CLK) digital pin number","DefaultValue":"7","Type":"pin;TM1638 CLK","Condition":"TM1638_ENABLEDMODULES > 0"}
+#define TM1638_STB1 27 			//{"Name":"TM1638_STB1","Title":"1st module strobe (STB0) digital pin number","DefaultValue":"9","Type":"pin;TM1638 STB1","Condition":"TM1638_ENABLEDMODULES > 0"}
 #define TM1638_SINGLECOLOR1 1   //{"Name":"TM1638_SINGLECOLOR1","Title":"1st module is single color","DefaultValue":"0","Type":"bool","Condition":"TM1638_ENABLEDMODULES > 0"}
 
 #define TM1638_STB2 0          //{"Name":"TM1638_STB2","Title":"2nd module strobe (STB1) digital pin number","DefaultValue":"10","Type":"pin;TM1638 STB2","Condition":"TM1638_ENABLEDMODULES > 1"}
@@ -235,7 +235,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 #define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
-#define WS2812B_DATAPIN GPIO_NUM_33  //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
+#define WS2812B_DATAPIN 33  		 //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_RGBENCODING 0        //{"Name":"WS2812B_RGBENCODING","Title":"WS2812B RGB encoding\r\nSet to 0 for GRB, 1 for RGB encoding, 2 for BRG encoding","DefaultValue":"0","Type":"list","Condition":"WS2812B_RGBLEDCOUNT>0","ListValues":"0,GRB encoding;1,RGB encoding;2,BRG encoding"}
 #define WS2812B_RIGHTTOLEFT 0        //{"Name":"WS2812B_RIGHTTOLEFT","Title":"Reverse led order ","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
 #define WS2812B_TESTMODE 1           //{"Name":"WS2812B_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2812B_RGBLEDCOUNT>0"}
@@ -759,31 +759,31 @@ SHShakeitPWM shShakeitPWM;
 #define SHAKEITPWMFANS_ENABLED_MOTORS 3        //{"Group":"SHAKEIT PWM FANS Outputs","Name":"SHAKEITPWMFANS_ENABLED_MOTORS","Title":"ShakeIT direct PWM fans enabled (25khz PWM)\r\nArduino Uno : pins 9 or 10\r\nArduino Leonardo pins : 9, 10 or 11\r\nArduino Mega pins : 11, 12 or 13","DefaultValue":"0","Type":"int","Max":3}
 
 #ifdef INCLUDE_SHAKEITPWMFANS
-#define SHAKEITPWMFANS_O1 GPIO_NUM_2                    //{"Name":"SHAKEITPWMFANS_O1","Title":"PWM Output 1 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM Fan 1","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1"}
+#define SHAKEITPWMFANS_O1 2                    //{"Name":"SHAKEITPWMFANS_O1","Title":"PWM Output 1 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM Fan 1","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O1 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O1","Title":"PWM Output 1 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O1 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O1","Title":"PWM Output 1 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_01 GPIO_NUM_6          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_01","Title":"PWM Output 1 optional on/off relay pin","DefaultValue":"4","Type":"pin;PWN FAN 1 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_01 6          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_01","Title":"PWM Output 1 optional on/off relay pin","DefaultValue":"4","Type":"pin;PWN FAN 1 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_01 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_01","Title":"PWM Output 1 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1 && SHAKEITPWMFANS_RELAY_PIN_01 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_01 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_01","Title":"PWM Output 1 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay must be off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1 && SHAKEITPWMFANS_RELAY_PIN_01 > 0"}
 
-#define SHAKEITPWMFANS_O2 GPIO_NUM_3                   //{"Name":"SHAKEITPWMFANS_O2","Title":"PWM Output 2 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 2","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2"}
+#define SHAKEITPWMFANS_O2 3                    //{"Name":"SHAKEITPWMFANS_O2","Title":"PWM Output 2 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 2","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O2 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O2","Title":"PWM Output 2 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O2 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O2","Title":"PWM Output 2 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_02 GPIO_NUM_7          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_02","Title":"PWM Output 2 optional on/off relay pin","DefaultValue":"5","Type":"pin;PWN FAN 2 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_02 7          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_02","Title":"PWM Output 2 optional on/off relay pin","DefaultValue":"5","Type":"pin;PWN FAN 2 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_02 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_02","Title":"PWM Output 2 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2 && SHAKEITPWMFANS_RELAY_PIN_02 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_02 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_02","Title":"PWM Output 2 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2 && SHAKEITPWMFANS_RELAY_PIN_02 > 0"}
 
-#define SHAKEITPWMFANS_O3 GPIO_NUM_4                   //{"Name":"SHAKEITPWMFANS_O3","Title":"PWM Output 3 pin","DefaultValue":"11","Type":"pin;ShakeIt PWM Fan 3","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3"}
+#define SHAKEITPWMFANS_O3 4                    //{"Name":"SHAKEITPWMFANS_O3","Title":"PWM Output 3 pin","DefaultValue":"11","Type":"pin;ShakeIt PWM Fan 3","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O3 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O3","Title":"PWM Output 3 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O3 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O3","Title":"PWM Output 3 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_03 GPIO_NUM_8          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_03","Title":"PWM Output 3 optional on/off relay pin","DefaultValue":"6","Type":"pin;PWN FAN 3 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_03 8          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_03","Title":"PWM Output 3 optional on/off relay pin","DefaultValue":"6","Type":"pin;PWN FAN 3 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_03 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_03","Title":"PWM Output 3 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3 && SHAKEITPWMFANS_RELAY_PIN_03 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_03 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_03","Title":"PWM Output 3 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3 && SHAKEITPWMFANS_RELAY_PIN_03 > 0"}
 
-#define SHAKEITPWMFANS_O4 GPIO_NUM_5                   //{"Name":"SHAKEITPWMFANS_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 4","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4"}
+#define SHAKEITPWMFANS_O4 5                    //{"Name":"SHAKEITPWMFANS_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 4","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O4 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O4","Title":"PWM Output 4 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O4 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O4","Title":"PWM Output 4 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_04 GPIO_NUM_9          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_04","Title":"PWM Output 4 optional on/off relay pin","DefaultValue":"7","Type":"pin;PWN FAN 4 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_04 9          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_04","Title":"PWM Output 4 optional on/off relay pin","DefaultValue":"7","Type":"pin;PWN FAN 4 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_04 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_04","Title":"PWM Output 4 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4 && SHAKEITPWMFANS_RELAY_PIN_04 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_04 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_04","Title":"PWM Output 4 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4 && SHAKEITPWMFANS_RELAY_PIN_04 > 0"}
 
