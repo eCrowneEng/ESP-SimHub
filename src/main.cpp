@@ -1,17 +1,17 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
-#define INCLUDE_WIFI false
+#define INCLUDE_WIFI true
 #if INCLUDE_WIFI
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
 #define DEBUG_TCP_BRIDGE true
 
-#include <TcpSerialBridge.h>
+#include <TcpSerialBridge2.h>
+#include <ECrowneWifi.h>
 #include <FullLoopbackStream.h>
 
 FullLoopbackStream outgoingStream;
 FullLoopbackStream incomingStream;
-TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_BRIDGE);
 
 #endif // INCLUDE_WIFI
 
@@ -956,7 +956,7 @@ void esp32WifiLoop (void* pvParameters)
 {
   while (1) 
   {
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
+	ECrowneWifi::loop();
   }
 }
 #endif
@@ -965,7 +965,7 @@ void idle(bool critical) {
 #if INCLUDE_WIFI
 #ifdef ESP8266
 	// wifi runs twice on the ESP8266 (loop + idle).. but the ESP32 uses a separate core.
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
+	ECrowneWifi::loop();
 #endif
 #endif
 
@@ -1091,7 +1091,8 @@ void setup()
 #endif
 
 #if INCLUDE_WIFI
-	bridge.setup(/* resetSavedWifiSettings */ false);
+	bool resetWiFiSettings = false;
+	ECrowneWifi::setup(&outgoingStream, &incomingStream, resetWiFiSettings);
 #endif
 
 	//#ifdef INCLUDE_TEMPGAUGE
@@ -1281,6 +1282,7 @@ void setup()
 #endif
 
 #ifdef ESP32
+#ifdef REMOVEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #if INCLUDE_WIFI
 	// wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
 	xTaskCreatePinnedToCore(
@@ -1292,6 +1294,7 @@ void setup()
 		NULL,      			// Task handle.
 		0          			// Core where the task should run
 	);
+#endif
 #endif
 #endif
 }
@@ -1357,10 +1360,10 @@ unsigned long lastSerialActivity = 0;
 
 void loop() {
 #if INCLUDE_WIFI
-#ifdef ESP8266
+//#ifdef ESP8266
 	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
-#endif
+	ECrowneWifi::loop();
+//#endif
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N

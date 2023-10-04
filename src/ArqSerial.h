@@ -40,6 +40,7 @@ private:
 			if (idleFunction != 0) idleFunction(true);
 			c = StreamRead();
 			if (c >= 0) {
+				Serial.printf("\n read this data: %d\n", c);
 #ifdef TESTFAIL
 				testfailidx = (testfailidx + 1) % 5000;
 				if (testfailidx == 500)
@@ -57,8 +58,8 @@ private:
 	void ProcessIncomingData() {
 		int packetID, length, header, res, i, crc, nextpacketid;
 		byte currentCrc;
-
-		while (StreamAvailable() > 0) {
+		int av = StreamAvailable();
+		while (av > 0) {
 			header = Arq_TimedRead();
 			//DebugPrintLn("hello1");
 			currentCrc = 0;
