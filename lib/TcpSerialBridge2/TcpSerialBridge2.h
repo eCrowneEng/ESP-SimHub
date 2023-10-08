@@ -455,6 +455,7 @@ public:
       clients.push_back(client);
       
       // register events
+      client->onAck([&](void* arg, AsyncClient* client, size_t len, uint32_t time){ Serial.printf("\n ack: %d %d", len, time); }, NULL);
       client->onData([&](void* arg, AsyncClient* client, void *data, size_t len){ this->handleData(arg, client, data, len); }, NULL);
       client->onError(&handleError, NULL);
       client->onDisconnect(&handleDisconnect, NULL);
@@ -491,7 +492,10 @@ public:
     Serial.printf("\n found connected client to write to: \n");
     Serial.printf("\n %d, %d", sbuf[0], sbuf[1]);
 #endif
-          client->write(sbuf, availableLength);
+          size_t s = client->write(sbuf, availableLength, ASYNC_WRITE_FLAG_MORE);
+#if DEBUG_TCP_BRIDGE
+    Serial.printf("\n sent ok? total: %d, total clients: %d\n", s, clients.size());
+#endif
         }
       }
     }
