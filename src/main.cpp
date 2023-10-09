@@ -3,7 +3,7 @@
 
 #define INCLUDE_WIFI true
 // less secure, but saves a bunch of memory. Also it will only work in your network
-#define USE_HARDCODED_CREDENTIALS true
+#define USE_HARDCODED_CREDENTIALS false
 
 #if INCLUDE_WIFI
 #if USE_HARDCODED_CREDENTIALS
@@ -959,22 +959,10 @@ SHCustomProtocol shCustomProtocol;
 #include "SHCommandsGlcd.h"
 unsigned long lastMatrixRefresh = 0;
 
-#if INCLUDE_WIFI
-void esp32WifiLoop (void* pvParameters)
-{
-  while (1) 
-  {
-	ECrowneWifi::loop();
-  }
-}
-#endif
 
 void idle(bool critical) {
 #if INCLUDE_WIFI
-#ifdef ESP8266
-	// wifi runs twice on the ESP8266 (loop + idle).. but the ESP32 uses a separate core.
-	ECrowneWifi::loop();
-#endif
+	ECrowneWifi::flush();
 #endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
@@ -1366,10 +1354,7 @@ unsigned long lastSerialActivity = 0;
 
 void loop() {
 #if INCLUDE_WIFI
-// #ifdef ESP8266
-	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
 	ECrowneWifi::loop();
-// #endif
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N

@@ -486,7 +486,9 @@ public:
       clients.push_back(client);
       
       // register events
+#if DEBUG_TCP_BRIDGE
       client->onAck([&](void* arg, AsyncClient* client, size_t len, uint32_t time){ Serial.printf("\n ack: %d %d", len, time); }, NULL);
+#endif
       client->onData([&](void* arg, AsyncClient* client, void *data, size_t len){ this->handleData(arg, client, data, len); }, NULL);
       client->onError(&handleError, NULL);
       client->onDisconnect(&handleDisconnect, NULL);

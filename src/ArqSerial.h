@@ -57,6 +57,7 @@ private:
 	void ProcessIncomingData() {
 		int packetID, length, header, res, i, crc, nextpacketid;
 		byte currentCrc;
+
 		while (StreamAvailable() > 0) {
 			header = Arq_TimedRead();
 			//DebugPrintLn("hello1");
@@ -100,7 +101,6 @@ private:
 				// read checksum
 				crc = Arq_TimedRead(); // 106
 				if (crc < 0) {
-					Serial.printf("\n checksum is wrong: %d\n", res);
 					failureReason = 0x03; // bad data b/c no checksum
 					SendNAcq(Arq_LastValidPacket, failureReason);
 					continue;
