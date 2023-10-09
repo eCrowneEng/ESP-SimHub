@@ -1276,21 +1276,6 @@ void setup()
 #ifdef INCLUDE_GAMEPAD
 	Joystick.sendState();
 #endif
-
-#ifdef ESP32
-#if INCLUDE_WIFI
-	// // wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
-	// xTaskCreatePinnedToCore(
-	// 	esp32WifiLoop,     	// Function to implement the task
-	// 	"esp32WifiLoop",   	// Name of the task
-	// 	5120,      			// Stack size in bytes
-	// 	NULL,      			// Task input parameter
-	// 	tskIDLE_PRIORITY,   // Priority of the task
-	// 	NULL,      			// Task handle.
-	// 	0          			// Core where the task should run
-	// );
-#endif
-#endif
 }
 
 #ifdef  INCLUDE_ENCODERS
