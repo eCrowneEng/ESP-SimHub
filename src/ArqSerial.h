@@ -40,7 +40,6 @@ private:
 			if (idleFunction != 0) idleFunction(true);
 			c = StreamRead();
 			if (c >= 0) {
-				Serial.printf("\n read this data: %d\n", c);
 #ifdef TESTFAIL
 				testfailidx = (testfailidx + 1) % 5000;
 				if (testfailidx == 500)
@@ -58,8 +57,7 @@ private:
 	void ProcessIncomingData() {
 		int packetID, length, header, res, i, crc, nextpacketid;
 		byte currentCrc;
-		int av = StreamAvailable();
-		while (av > 0) {
+		while (StreamAvailable() > 0) {
 			header = Arq_TimedRead();
 			//DebugPrintLn("hello1");
 			currentCrc = 0;
@@ -102,6 +100,7 @@ private:
 				// read checksum
 				crc = Arq_TimedRead(); // 106
 				if (crc < 0) {
+					Serial.printf("\n checksum is wrong: %d\n", res);
 					failureReason = 0x03; // bad data b/c no checksum
 					SendNAcq(Arq_LastValidPacket, failureReason);
 					continue;

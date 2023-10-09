@@ -1,9 +1,22 @@
 #pragma once
-// captive portal ip is always 192.168.4.1
 
 #include <Arduino.h>
+#if USE_HARDCODED_CREDENTIALS
+#else
+// captive portal ip is always 192.168.4.1
 #include <ESPAsyncWebServer.h>
+#endif
 #include <FullLoopbackStream.h>
+
+
+#if DEBUG_TCP_BRIDGE
+// all the logs, more memory usage
+#define _ESPASYNC_WIFIMGR_LOGLEVEL_    4
+#else
+// no logs, less memory usage
+#define _ESPASYNC_WIFIMGR_LOGLEVEL_    0
+#endif
+
 
 #ifdef ESP32
   #include <esp_wifi.h>
@@ -15,12 +28,14 @@
 
   // ASSUME Arduino ESP 2.0+
 
+#if USE_HARDCODED_CREDENTIALS
+#else
   #include "FS.h"
   #include <LittleFS.h>
   FS* filesystem =      &LittleFS;
   #define FileFS        LittleFS
   #define FS_Name       "LittleFS"
-
+#endif
 #else
 
   #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
@@ -32,23 +47,33 @@
   #include <ESP8266WiFiMulti.h>
   ESP8266WiFiMulti wifiMulti;
 
+#if USE_HARDCODED_CREDENTIALS
+#else
   #include <LittleFS.h>
   FS* filesystem =      &LittleFS;
   #define FileFS        LittleFS
   #define FS_Name       "LittleFS"
 
   #define ESP_getChipId()   (ESP.getChipId())
-
+#endif
 #endif
 
 #define WIFICHECK_INTERVAL    1000L
 
+#if USE_HARDCODED_CREDENTIALS
+String Router_SSID = WIFI_SSID;
+String Router_Pass = WIFI_PASSWORD;
+#else
 String Router_SSID;
 String Router_Pass;
+#endif
 
 // a list to hold all clients
 static std::vector<AsyncClient*> clients;
 
+#if USE_HARDCODED_CREDENTIALS
+#include <ESPAsync_WiFiManager_Debug.h>
+#else
 typedef struct
 {
   char wifi_ssid[32];
@@ -68,14 +93,6 @@ bool initialConfig = false;
 
 // Where in the filesystem we store credentials
 #define CONFIG_FILENAME           F("/wifi_cred.dat")
-#if DEBUG_TCP_BRIDGE
-// all the logs, more memory usage
-#define _ESPASYNC_WIFIMGR_LOGLEVEL_    4
-#else
-// no logs, less memory usage
-#define _ESPASYNC_WIFIMGR_LOGLEVEL_    0
-#endif
-
 
 IPAddress stationIP   = IPAddress(0, 0, 0, 0);
 IPAddress gatewayIP   = IPAddress(192, 168, 2, 1);
@@ -83,17 +100,9 @@ IPAddress netMask     = IPAddress(255, 255, 255, 0);
 IPAddress APStaticIP  = IPAddress(192, 168, 100, 1);
 IPAddress APStaticGW  = IPAddress(192, 168, 100, 1);
 IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
-
 #include <ESPAsync_WiFiManager.h>
-
 WiFi_STA_IPConfig WM_STA_IPconfig;
-
-
-void configWiFi(WiFi_STA_IPConfig in_WM_STA_IPconfig)
-{
-  // Set static IP, Gateway, Subnetmask, Use auto DNS1 and DNS2.
-  WiFi.config(in_WM_STA_IPconfig._sta_static_ip, in_WM_STA_IPconfig._sta_static_gw, in_WM_STA_IPconfig._sta_static_sn);
-}
+#endif
 
 ///////////////////////////////////////////
 
@@ -179,6 +188,8 @@ void check_status()
   }
 }
 
+#if USE_HARDCODED_CREDENTIALS
+#else
 int calcChecksum(uint8_t* address, uint16_t sizeToCalc)
 {
   uint16_t checkSum = 0;
@@ -240,6 +251,7 @@ void saveConfigData()
     LOGERROR(F("failed"));
   }
 }
+#endif
 
 static void handleError(void* arg, AsyncClient* client, int8_t error) {
 #if DEBUG_TCP_BRIDGE
@@ -280,7 +292,10 @@ public:
 
     this->outgoingStream = outgoingStream;
     this->incomingStream = incomingStream;
+    unsigned long startedAt = millis();
 
+#if USE_HARDCODED_CREDENTIALS
+#else
     // Format FileFS if not yet
 #ifdef ESP32
     if (!FileFS.begin(true))
@@ -305,7 +320,6 @@ public:
       }
     }
 
-    unsigned long startedAt = millis();
 
     WM_STA_IPconfig._sta_static_ip   = stationIP;
     WM_STA_IPconfig._sta_static_gw   = gatewayIP;
@@ -328,20 +342,26 @@ public:
 
     Router_SSID = ESPAsync_wifiManager.WiFi_SSID();
     Router_Pass = ESPAsync_wifiManager.WiFi_Pass();
-
     bool configDataLoaded = false;
+#endif
+
 
     if ( (Router_SSID != "") && (Router_Pass != "") )
     {
       LOGERROR3(F("* Add SSID = "), Router_SSID, F(", PW = "), Router_Pass);
       wifiMulti.addAP(Router_SSID.c_str(), Router_Pass.c_str());
-
+#if USE_HARDCODED_CREDENTIALS
+#else
       ESPAsync_wifiManager.setConfigPortalTimeout(120); //If no access point name has been previously entered disable timeout.
+#endif
 #if DEBUG_TCP_BRIDGE
       Serial.println(F("Got ESP Self-Stored Credentials. Timeout 120s for Config Portal"));
 #endif
     }
 
+
+#if USE_HARDCODED_CREDENTIALS
+#else
     if (loadConfigData())
     {
       configDataLoaded = true;
@@ -359,7 +379,12 @@ public:
 #endif
       initialConfig = true;
     }
+#endif
 
+#if USE_HARDCODED_CREDENTIALS
+    startedAt = millis();
+    connectMultiWiFi();
+#else
     if (initialConfig)
     {
       String chipID = String(ESP_getChipId(), HEX);
@@ -413,8 +438,9 @@ public:
     if (!initialConfig)
     {
       // Load stored data, the addAP ready for MultiWiFi reconnection
-      if (!configDataLoaded)
+      if (!configDataLoaded) {
         loadConfigData();
+      }
 
       uint8_t i = 0;
       // Don't permit NULL SSID and password len < MIN_AP_PASSWORD_SIZE (8)
@@ -432,8 +458,9 @@ public:
         connectMultiWiFi();
       }
     }
+#endif
 
-  #if DEBUG_TCP_BRIDGE
+#if DEBUG_TCP_BRIDGE
     Serial.print(F("After waiting "));
     Serial.print((float) (millis() - startedAt) / 1000L);
     Serial.print(F(" secs more in setup(), connection result is "));
@@ -443,13 +470,17 @@ public:
       Serial.println(WiFi.localIP());
     }
     else
-      Serial.println(ESPAsync_wifiManager.getStatus(WiFi.status()));
-  #endif  
+    {
+      Serial.print(F("Wifi Status: "));
+      Serial.println(WiFi.status());
+    }
+#endif
+
     server.setNoDelay(true);
     server.onClient([this](void *arg, AsyncClient* client){
-  #if DEBUG_TCP_BRIDGE
+#if DEBUG_TCP_BRIDGE
       Serial.printf("\n new client has been connected to server, ip: %s", client->remoteIP().toString().c_str());
-  #endif
+#endif
 
       // add to list
       clients.push_back(client);
@@ -487,14 +518,12 @@ public:
       AsyncClient* client = clients.front();
       if (client->connected())
       {
+        // if can send data to client
 	      if (client->space() > availableLength && client->canSend()) {
+          // send data to client
+          size_t total = client->write(sbuf, availableLength);
 #if DEBUG_TCP_BRIDGE
-    Serial.printf("\n found connected client to write to: \n");
-    Serial.printf("\n %d, %d", sbuf[0], sbuf[1]);
-#endif
-          size_t s = client->write(sbuf, availableLength, ASYNC_WRITE_FLAG_MORE);
-#if DEBUG_TCP_BRIDGE
-    Serial.printf("\n sent ok? total: %d, total clients: %d\n", s, clients.size());
+	  Serial.printf("\n data sent to client %s: %d bytes \n", client->remoteIP().toString().c_str(), total);
 #endif
         }
       }

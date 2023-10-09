@@ -2,9 +2,17 @@
 #include <EspSimHub.h>
 
 #define INCLUDE_WIFI true
+// less secure, but saves a bunch of memory. Also it will only work in your network
+#define USE_HARDCODED_CREDENTIALS true
+
 #if INCLUDE_WIFI
+#if USE_HARDCODED_CREDENTIALS
+#define WIFI_SSID "Wifi NAME"
+#define WIFI_PASSWORD "WiFi Password"
+#endif
+
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
-#define DEBUG_TCP_BRIDGE true
+#define DEBUG_TCP_BRIDGE false
 
 #include <TcpSerialBridge2.h>
 #include <ECrowneWifi.h>
@@ -22,7 +30,7 @@ FullLoopbackStream incomingStream;
 
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
-//#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
+#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_PL9823                      //{"Name":"INCLUDE_PL9823","Type":"autodefine","Condition":"[PL9823_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
 //#define INCLUDE_LEDBACKPACK                 //{"Name":"INCLUDE_LEDBACKPACK","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_7SEGMENTS]>0 || [ENABLE_ADA_HT16K33_BiColorMatrix]>0"}
@@ -232,7 +240,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 // -------------------------------------------------------------------------------------------------------
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
+#define WS2812B_RGBLEDCOUNT 24        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
 #define WS2812B_DATAPIN 33  		 //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
@@ -1282,19 +1290,17 @@ void setup()
 #endif
 
 #ifdef ESP32
-#ifdef REMOVEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 #if INCLUDE_WIFI
-	// wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
-	xTaskCreatePinnedToCore(
-		esp32WifiLoop,     	// Function to implement the task
-		"esp32WifiLoop",   	// Name of the task
-		5120,      			// Stack size in bytes
-		NULL,      			// Task input parameter
-		tskIDLE_PRIORITY,   // Priority of the task
-		NULL,      			// Task handle.
-		0          			// Core where the task should run
-	);
-#endif
+	// // wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
+	// xTaskCreatePinnedToCore(
+	// 	esp32WifiLoop,     	// Function to implement the task
+	// 	"esp32WifiLoop",   	// Name of the task
+	// 	5120,      			// Stack size in bytes
+	// 	NULL,      			// Task input parameter
+	// 	tskIDLE_PRIORITY,   // Priority of the task
+	// 	NULL,      			// Task handle.
+	// 	0          			// Core where the task should run
+	// );
 #endif
 #endif
 }
@@ -1360,10 +1366,10 @@ unsigned long lastSerialActivity = 0;
 
 void loop() {
 #if INCLUDE_WIFI
-//#ifdef ESP8266
+// #ifdef ESP8266
 	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
 	ECrowneWifi::loop();
-//#endif
+// #endif
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
