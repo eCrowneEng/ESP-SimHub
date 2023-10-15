@@ -1,12 +1,11 @@
-#ifndef __SHRGBLEDSBASE_H__
-#define __SHRGBLEDSBASE_H__
+#pragma once
 
 #include <Arduino.h>
 
 class SHRGBLedsBase {
 protected:
-	int _maxLeds;
-	int _righttoleft;
+	int _maxLeds = 0;
+	int _righttoleft = 0;
 
 	void begin(int maxLeds, int righttoleft) {
 		_maxLeds = maxLeds;
@@ -100,5 +99,3 @@ public:
 		}
 	}
 };
-
-#endif

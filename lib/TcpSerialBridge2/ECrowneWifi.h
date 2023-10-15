@@ -5,8 +5,8 @@ TcpSerialBridge2 instance(BRIDGE_PORT);
 
 class ECrowneWifi {
     public:
-        static void setup(FullLoopbackStream *outgoingStream, FullLoopbackStream *incomingStream, bool resetWiFiSettings) {
-            instance.setup(outgoingStream, incomingStream, resetWiFiSettings);
+        static void setup(FullLoopbackStream *outgoingStream, FullLoopbackStream *incomingStream) {
+            instance.setup(outgoingStream, incomingStream);
         }
         static void loop() {
             instance.loop();

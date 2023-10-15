@@ -26,16 +26,7 @@
   #include <WiFiMulti.h>
   WiFiMulti wifiMulti;
 
-  // ASSUME Arduino ESP 2.0+
 
-#if USE_HARDCODED_CREDENTIALS
-#else
-  #include "FS.h"
-  #include <LittleFS.h>
-  FS* filesystem =      &LittleFS;
-  #define FileFS        LittleFS
-  #define FS_Name       "LittleFS"
-#endif
 #else
 
   #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
@@ -46,34 +37,31 @@
   // From v1.1.1
   #include <ESP8266WiFiMulti.h>
   ESP8266WiFiMulti wifiMulti;
-
-#if USE_HARDCODED_CREDENTIALS
-#else
-  #include <LittleFS.h>
-  FS* filesystem =      &LittleFS;
-  #define FileFS        LittleFS
-  #define FS_Name       "LittleFS"
-
   #define ESP_getChipId()   (ESP.getChipId())
-#endif
+
 #endif
 
 #define WIFICHECK_INTERVAL    1000L
 
-#if USE_HARDCODED_CREDENTIALS
-String Router_SSID = WIFI_SSID;
-String Router_Pass = WIFI_PASSWORD;
-#else
-String Router_SSID;
-String Router_Pass;
-#endif
-
 // a list to hold all clients
 static std::vector<AsyncClient*> clients;
 
+
 #if USE_HARDCODED_CREDENTIALS
+String Router_SSID = WIFI_SSID;
+String Router_Pass = WIFI_PASSWORD;
 #include <ESPAsync_WiFiManager_Debug.h>
 #else
+// ASSUME Arduino ESP 2.0+
+#include "FS.h"
+#include <LittleFS.h>
+FS* filesystem =      &LittleFS;
+#define FileFS        LittleFS
+#define FS_Name       "LittleFS"
+
+String Router_SSID;
+String Router_Pass;
+
 typedef struct
 {
   char wifi_ssid[32];
@@ -103,6 +91,7 @@ IPAddress APStaticSN  = IPAddress(255, 255, 255, 0);
 #include <ESPAsync_WiFiManager.h>
 WiFi_STA_IPConfig WM_STA_IPconfig;
 #endif
+
 
 ///////////////////////////////////////////
 
@@ -284,7 +273,7 @@ class TcpSerialBridge2
 public:
   TcpSerialBridge2(uint16_t tcpPort) : server(tcpPort) {}
 
-  void setup(FullLoopbackStream *outgoingStream, FullLoopbackStream *incomingStream, bool resetWiFiSettings) {
+  void setup(FullLoopbackStream *outgoingStream, FullLoopbackStream *incomingStream) {
 #if DEBUG_TCP_BRIDGE
     Serial.begin(115200);
     delay(200);
@@ -336,9 +325,6 @@ public:
 #endif
 
     ESPAsync_wifiManager.setDebugOutput(DEBUG_TCP_BRIDGE);
-
-    //reset settings - for testing
-    //ESPAsync_wifiManager.resetSettings();
 
     Router_SSID = ESPAsync_wifiManager.WiFi_SSID();
     Router_Pass = ESPAsync_wifiManager.WiFi_Pass();
@@ -487,7 +473,7 @@ public:
       
       // register events
 #if DEBUG_TCP_BRIDGE
-      client->onAck([&](void* arg, AsyncClient* client, size_t len, uint32_t time){ Serial.printf("\n ack: %d %d", len, time); }, NULL);
+      client->onAck([&](void* arg, AsyncClient* client, size_t len, uint32_t time){ Serial.printf("\n ack: %d %d\n", len, time); }, NULL);
 #endif
       client->onData([&](void* arg, AsyncClient* client, void *data, size_t len){ this->handleData(arg, client, data, len); }, NULL);
       client->onError(&handleError, NULL);
@@ -510,7 +496,7 @@ public:
     if (availableLength)
     {
 #if DEBUG_TCP_BRIDGE
-    Serial.printf("\n flushing with this much data: %d \n", availableLength);
+    Serial.printf("flushing with this much data: %d \n", availableLength);
 #endif
       // read the available data from the stream, and put in in the buffer
       char sbuf[availableLength];
@@ -520,14 +506,12 @@ public:
       AsyncClient* client = clients.front();
       if (client->connected())
       {
-        // if can send data to client
-	      if (client->space() > availableLength && client->canSend()) {
-          // send data to client
-          size_t total = client->write(sbuf, availableLength);
+        // send data to client
+        size_t total = client->write(sbuf, availableLength);
 #if DEBUG_TCP_BRIDGE
-	  Serial.printf("\n data sent to client %s: %d bytes \n", client->remoteIP().toString().c_str(), total);
+	  Serial.printf("\n ---> data sent to client %s: %d bytes \n", client->remoteIP().toString().c_str(), total);
+    Serial.printf("%d %d\n",sbuf[0], sbuf[1]);
 #endif
-        }
       }
     }
   }
@@ -535,8 +519,9 @@ public:
 private:
   void handleData(void* arg, AsyncClient* client, void *data, size_t len) {
 #if DEBUG_TCP_BRIDGE
-	  Serial.printf("\n data received from client %s \n", client->remoteIP().toString().c_str());
+	  Serial.printf("\n <--- data received from client %s \n", client->remoteIP().toString().c_str());
 	  Serial.write((uint8_t*)data, len);
+    Serial.println(" ");
 #endif
     const uint8_t *castData = (uint8_t*)data;
     this->incomingStream->write(castData, (size_t)len);

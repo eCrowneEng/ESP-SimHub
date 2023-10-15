@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
-#define INCLUDE_WIFI true
-// less secure, but saves a bunch of memory. Also it will only work in your network
+#define INCLUDE_WIFI false
+// Less secure if you plan to commit or share your files, but saves a bunch of memory. 
+//  If you hardcode credentials the device will only work in your network
 #define USE_HARDCODED_CREDENTIALS false
 
 #if INCLUDE_WIFI
@@ -12,7 +13,7 @@
 #endif
 
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
-#define DEBUG_TCP_BRIDGE false
+#define DEBUG_TCP_BRIDGE false // emits extra events to Serial that show network communication, set to false to save memory and make faster
 
 #include <TcpSerialBridge2.h>
 #include <ECrowneWifi.h>
@@ -30,7 +31,7 @@ FullLoopbackStream incomingStream;
 
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
-#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
+//#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_PL9823                      //{"Name":"INCLUDE_PL9823","Type":"autodefine","Condition":"[PL9823_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
 //#define INCLUDE_LEDBACKPACK                 //{"Name":"INCLUDE_LEDBACKPACK","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_7SEGMENTS]>0 || [ENABLE_ADA_HT16K33_BiColorMatrix]>0"}
@@ -961,6 +962,7 @@ unsigned long lastMatrixRefresh = 0;
 
 
 void idle(bool critical) {
+	yield();
 #if INCLUDE_WIFI
 	ECrowneWifi::flush();
 #endif
@@ -1087,8 +1089,7 @@ void setup()
 #endif
 
 #if INCLUDE_WIFI
-	bool resetWiFiSettings = false;
-	ECrowneWifi::setup(&outgoingStream, &incomingStream, resetWiFiSettings);
+	ECrowneWifi::setup(&outgoingStream, &incomingStream);
 #endif
 
 	//#ifdef INCLUDE_TEMPGAUGE
