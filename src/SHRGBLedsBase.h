@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __SHRGBLEDSBASE_H__
+#define __SHRGBLEDSBASE_H__
 
 #include <Arduino.h>
 
@@ -99,3 +100,5 @@ public:
 		}
 	}
 };
+
+#endif

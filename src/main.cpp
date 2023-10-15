@@ -962,8 +962,8 @@ unsigned long lastMatrixRefresh = 0;
 
 
 void idle(bool critical) {
-	yield();
 #if INCLUDE_WIFI
+	yield();
 	ECrowneWifi::flush();
 #endif
 
