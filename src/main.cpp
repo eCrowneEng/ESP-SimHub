@@ -241,7 +241,7 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 // -------------------------------------------------------------------------------------------------------
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_RGBLEDCOUNT 24        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
+#define WS2812B_RGBLEDCOUNT 0        //{"Group":"WS2812B RGB Leds","Name":"WS2812B_RGBLEDCOUNT","Title":"WS2812B RGB leds count","DefaultValue":"0","Type":"int","Max":150}
 #ifdef INCLUDE_WS2812B
 
 #define WS2812B_DATAPIN 33  		 //{"Name":"WS2812B_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B LEDS DATA","Condition":"WS2812B_RGBLEDCOUNT>0"}
