@@ -2,16 +2,25 @@
 #include <EspSimHub.h>
 
 #define INCLUDE_WIFI false
-#if INCLUDE_WIFI
-#define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
-#define DEBUG_TCP_BRIDGE true
+// Less secure if you plan to commit or share your files, but saves a bunch of memory. 
+//  If you hardcode credentials the device will only work in your network
+#define USE_HARDCODED_CREDENTIALS false
 
-#include <TcpSerialBridge.h>
+#if INCLUDE_WIFI
+#if USE_HARDCODED_CREDENTIALS
+#define WIFI_SSID "Wifi NAME"
+#define WIFI_PASSWORD "WiFi Password"
+#endif
+
+#define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
+#define DEBUG_TCP_BRIDGE false // emits extra events to Serial that show network communication, set to false to save memory and make faster
+
+#include <TcpSerialBridge2.h>
+#include <ECrowneWifi.h>
 #include <FullLoopbackStream.h>
 
 FullLoopbackStream outgoingStream;
 FullLoopbackStream incomingStream;
-TcpSerialBridge bridge(BRIDGE_PORT, &outgoingStream, &incomingStream, DEBUG_TCP_BRIDGE);
 
 #endif // INCLUDE_WIFI
 
@@ -951,22 +960,11 @@ SHCustomProtocol shCustomProtocol;
 #include "SHCommandsGlcd.h"
 unsigned long lastMatrixRefresh = 0;
 
-#if INCLUDE_WIFI
-void esp32WifiLoop (void* pvParameters)
-{
-  while (1) 
-  {
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
-  }
-}
-#endif
 
 void idle(bool critical) {
 #if INCLUDE_WIFI
-#ifdef ESP8266
-	// wifi runs twice on the ESP8266 (loop + idle).. but the ESP32 uses a separate core.
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
-#endif
+	yield();
+	ECrowneWifi::flush();
 #endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
@@ -1091,7 +1089,7 @@ void setup()
 #endif
 
 #if INCLUDE_WIFI
-	bridge.setup(/* resetSavedWifiSettings */ false);
+	ECrowneWifi::setup(&outgoingStream, &incomingStream);
 #endif
 
 	//#ifdef INCLUDE_TEMPGAUGE
@@ -1279,21 +1277,6 @@ void setup()
 #ifdef INCLUDE_GAMEPAD
 	Joystick.sendState();
 #endif
-
-#ifdef ESP32
-#if INCLUDE_WIFI
-	// wifi will be handled in a separate core in the ESP32. The ESP8266 uses the same for everything.
-	xTaskCreatePinnedToCore(
-		esp32WifiLoop,     	// Function to implement the task
-		"esp32WifiLoop",   	// Name of the task
-		5120,      			// Stack size in bytes
-		NULL,      			// Task input parameter
-		tskIDLE_PRIORITY,   // Priority of the task
-		NULL,      			// Task handle.
-		0          			// Core where the task should run
-	);
-#endif
-#endif
 }
 
 #ifdef  INCLUDE_ENCODERS
@@ -1357,10 +1340,7 @@ unsigned long lastSerialActivity = 0;
 
 void loop() {
 #if INCLUDE_WIFI
-#ifdef ESP8266
-	// wifi runs on the only core in the ESP8266.. but the ESP32 uses a separate one.
-	bridge.loop(/* startWifiConfigPortalAgain */ false);
-#endif
+	ECrowneWifi::loop();
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N

@@ -5,7 +5,7 @@
 #define FASTLED_ESP8266_RAW_PIN_ORDER
 
 #include <Arduino.h>
-#include "SHRGBLedsBase.h"
+#include <SHRGBLedsBase.h>
 #include <FastLED.h>
 
 CRGB SHRGBLedsNeoPixelFastLeds_leds[WS2812B_RGBLEDCOUNT];

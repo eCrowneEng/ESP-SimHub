@@ -8,7 +8,7 @@ ARQSerial arqserial;
 
 #define FlowSerialAvailable() arqserial.Available()
 #define FlowSerialTimedRead() arqserial.read()
-#define  FlowSerialWrite(data) arqserial.Write(data)
+#define FlowSerialWrite(data) arqserial.Write(data)
 
 String FlowSerialReadStringUntil(char terminator) { return arqserial.ReadStringUntil(terminator); }
 String FlowSerialReadStringUntil(char terminator1, char terminator2) { return arqserial.ReadStringUntil(terminator1, terminator2); }

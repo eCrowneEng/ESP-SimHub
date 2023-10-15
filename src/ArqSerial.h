@@ -89,7 +89,7 @@ private:
 
 				// read data
 				for (i = 0; i < length && !failureReason; i++) {
-					res = Arq_TimedRead(); // 106
+					res = Arq_TimedRead(); // 3 49 16
 					partialdatabuffer[i] = res;
 					if (res < 0) {
 						failureReason = 0x05; // bad data
@@ -99,7 +99,7 @@ private:
 				}
 
 				// read checksum
-				crc = Arq_TimedRead();
+				crc = Arq_TimedRead(); // 106
 				if (crc < 0) {
 					failureReason = 0x03; // bad data b/c no checksum
 					SendNAcq(Arq_LastValidPacket, failureReason);
