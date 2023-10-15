@@ -6,5 +6,4 @@
 // #define ESP32 true // if using ESP8266, comment out
 #define ESP8266 true // if using ESP32, comment out
 
-// PIN Aliases no longer here,
-//  Use GPIO_NUM_XX instead of D1, D2, etc
+// PIN Aliases no longer here, use numbers
