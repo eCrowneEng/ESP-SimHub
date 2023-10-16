@@ -9,7 +9,7 @@ DualVNH5019MotorShield dualVNH5019MotorShield;
 
 class SHShakeitDualVNH5019 : public SHShakeitBase {
 private:
-	bool _reverseDirection;
+	bool _reverseDirection = false;
 public:
 	uint8_t motorCount() {
 		return 2;

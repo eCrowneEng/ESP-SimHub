@@ -1,14 +1,15 @@
 #pragma once
-#include <BoardDefs.h>
-#include <BoardWifi.h>
+#ifdef ESP32
+#include <WiFi.h>
+#else
+#include <ESP8266WiFi.h>
+#endif
+
 
 // Fake an Arduino Mega
 #define SIGNATURE_0 0x1E
 #define SIGNATURE_1 0x98
 #define SIGNATURE_2 0x01
-
-// Configure FASTLED with proper pin order
-#define FASTLED_ESP8266_NODEMCU_PIN_ORDER
 
 // A unique identifier for the device.
 //  in the future we could use the bytes to generate some

@@ -8,8 +8,8 @@ private:
 	unsigned long lastRead = 0;
 
 public:
-	virtual uint8_t motorCount();
-	virtual String providerName();
+	virtual uint8_t motorCount() = 0;
+	virtual String providerName() = 0;
 
 	virtual void safetyStop() {
 		uint8_t motorcount = motorCount();
@@ -41,7 +41,7 @@ public:
 	}
 
 protected:
-	virtual void setMotorOutput(uint8_t motorIdx, uint8_t value);
+	virtual void setMotorOutput(uint8_t motorIdx, uint8_t value) = 0;
 };
 
 #endif
