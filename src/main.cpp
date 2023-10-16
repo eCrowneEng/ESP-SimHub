@@ -835,10 +835,10 @@ SHGLCD_I2COLED shGLCD;
 // -------------------- NOKIA GLCD -------------------------------------------------------------------------
 //
 // ---------------------------------------------------------------------------------------------------------
-#define ENABLED_NOKIALCD 1 //{"Group":"Nokia GLCD","Name":"ENABLED_NOKIALCD","Title":"Nokia LCD enabled","DefaultValue":"0","Type":"bool","Max":2}
+#define ENABLED_NOKIALCD 0 //{"Group":"Nokia GLCD","Name":"ENABLED_NOKIALCD","Title":"Nokia LCD enabled","DefaultValue":"0","Type":"bool","Max":2}
 
 #ifdef INCLUDE_NOKIALCD
-#define ENABLED_OLEDLCD 1
+#define ENABLED_OLEDLCD 0
 #include <Adafruit_PCD8544.h>
 #include "SHGLCD_NOKIA.h"
 SHGLCD_NOKIA shNOKIA;
