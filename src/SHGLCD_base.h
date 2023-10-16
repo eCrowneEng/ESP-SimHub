@@ -14,24 +14,24 @@ class SHGLCD_Base
 {
 private:
 	//uint8_t  fontSize;
-	int16_t  posX;
-	int16_t  posY;
-	char action;
+	int16_t  posX = 0;
+	int16_t  posY = 0;
+	char action = 0;
 	int16_t v[4 * 2];
-	uint16_t color;
-	int16_t w;
-	int16_t h;
-	int16_t r;
+	uint16_t color = 0;
+	int16_t w = 0;
+	int16_t h = 0;
+	int16_t r = 0;
 	uint8_t align = 0;
 	//boolean wrap = 0;
 
-	int16_t boundX;
-	int16_t boundY;
-	uint16_t boundW;
-	uint16_t boundH;
+	int16_t boundX = 0;
+	int16_t boundY = 0;
+	uint16_t boundW = 0;
+	uint16_t boundH = 0;
 
-	uint8_t nokiaIndex;
-	uint8_t fontType;
+	uint8_t nokiaIndex = 0;
+	uint8_t fontType = 0;
 
 	Adafruit_GFX* currentNokia;
 

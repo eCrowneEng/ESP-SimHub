@@ -17,7 +17,7 @@ protected:
 
 public:
 
-	virtual void show();
+	virtual void show() = 0;
 
 	void clear() {
 		for (int j = 0; j < _maxLeds; j++) {

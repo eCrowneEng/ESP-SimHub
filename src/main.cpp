@@ -1,6 +1,12 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
+// This is used as a hint for the IDE, but the real values should come from platformio.ini environment
+//  as a matter of fact, you need to comment out BOTH if you are compiling for both environments
+//#define ESP32 true // if using ESP8266, comment out
+#define ESP8266 true // if using ESP32, comment out
+
+
 #define INCLUDE_WIFI false
 // Less secure if you plan to commit or share your files, but saves a bunch of memory. 
 //  If you hardcode credentials the device will only work in your network
@@ -28,22 +34,30 @@ FullLoopbackStream incomingStream;
 // J revision sketch
 #define VERSION 'j'
 
+#define DEVICE_NAME "HelloWorldEsp" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
 
+// Known working features:
+//  
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
-//#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
-//#define INCLUDE_PL9823                      //{"Name":"INCLUDE_PL9823","Type":"autodefine","Condition":"[PL9823_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
-//#define INCLUDE_LEDBACKPACK                 //{"Name":"INCLUDE_LEDBACKPACK","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_7SEGMENTS]>0 || [ENABLE_ADA_HT16K33_BiColorMatrix]>0"}
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
-//#define INCLUDE_TM1637_6D                   //{"Name":"INCLUDE_TM1637_6D","Type":"autodefine","Condition":"[TM1637_6D_ENABLEDMODULES]>0"}
 //#define INCLUDE_I2CLCD                      //{"Name":"INCLUDE_I2CLCD","Type":"autodefine","Condition":"[I2CLCD_enabled]>0"}
-//#define INCLUDE_NOKIALCD                    //{"Name":"INCLUDE_NOKIALCD","Type":"autodefine","Condition":"[ENABLED_NOKIALCD]>0"}
 //#define INCLUDE_OLED                        //{"Name":"INCLUDE_OLED","Type":"autodefine","Condition":"[ENABLED_OLEDLCD]>0"}
 //#define INCLUDE_MAX7221MATRIX               //{"Name":"INCLUDE_MAX7221MATRIX","Type":"autodefine","Condition":"[MAX7221_MATRIX_ENABLED]>0"}
+//#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
+//#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
+//#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
+
+// Untested features, please open a GitHub Issue, or post in the discord if you try them
+//
+//#define INCLUDE_WS2801                      //{"Name":"INCLUDE_WS2801","Type":"autodefine","Condition":"[WS2801_RGBLEDCOUNT]>0"}
+//#define INCLUDE_PL9823                      //{"Name":"INCLUDE_PL9823","Type":"autodefine","Condition":"[PL9823_RGBLEDCOUNT]>0"}
+//#define INCLUDE_LEDBACKPACK                 //{"Name":"INCLUDE_LEDBACKPACK","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_7SEGMENTS]>0 || [ENABLE_ADA_HT16K33_BiColorMatrix]>0"}
+//#define INCLUDE_TM1637_6D                   //{"Name":"INCLUDE_TM1637_6D","Type":"autodefine","Condition":"[TM1637_6D_ENABLEDMODULES]>0"}
+//#define INCLUDE_NOKIALCD                    //{"Name":"INCLUDE_NOKIALCD","Type":"autodefine","Condition":"[ENABLED_NOKIALCD]>0"}
 //#define INCLUDE_HT16K33_SINGLECOLORMATRIX   //{"Name":"INCLUDE_HT16K33_SINGLECOLORMATRIX","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_SingleColorMatrix]>0"}
 //#define INCLUDE_74HC595_GEAR_DISPLAY        //{"Name":"INCLUDE_74HC595_GEAR_DISPLAY","Type":"autodefine","Condition":"[ENABLE_74HC595_GEAR_DISPLAY]>0"}
-//#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
 //#define INCLUDE_6c595_GEAR_DISPLAY          //{"Name":"INCLUDE_6c595_GEAR_DISPLAY ","Type":"autodefine","Condition":"[ENABLE_6C595_GEAR_DISPLAY]>0"}
 //#define INCLUDE_TACHOMETER                  //{"Name":"INCLUDE_TACHOMETER ","Type":"autodefine","Condition":"[ENABLE_TACHOMETER]>0"}
 //#define INCLUDE_BOOSTGAUGE                  //{"Name":"INCLUDE_BOOSTGAUGE ","Type":"autodefine","Condition":"[ENABLE_BOOSTGAUGE]>0"}
@@ -57,7 +71,15 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_SHAKEITMOTOMONSTER          //{"Name":"INCLUDE_SHAKEITMOTOMONSTER","Type":"autodefine","Condition":"[MOTOMONSTER_ENABLED]>0"}
 //#define INCLUDE_SHAKEIDUALVNH5019           //{"Name":"INCLUDE_SHAKEIDUALVNH5019","Type":"autodefine","Condition":"[DUALVNH5019_ENABLED]>0"}
 //#define INCLUDE_SHAKEITPWM                  //{"Name":"INCLUDE_SHAKEITPWM","Type":"autodefine","Condition":"[SHAKEITPWM_ENABLED_MOTORS]>0"}
-//#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
+//#define INCLUDE_ENCODERS                    //{"Name":"INCLUDE_ENCODERS","Type":"autodefine","Condition":"[ENABLED_ENCODERS_COUNT]>0","IsInput":true}
+//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
+//#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
+//#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
+
+
+// Gamepad support =======================
+// Untested, it may work with ESP32 S3 and newer devices that support USB HID
+//  If you want to test, remove this "if defined ..."
 #if defined (__AVR_ATmega32U4__)
 //#define INCLUDE_GAMEPAD                     //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
 #endif
@@ -68,12 +90,12 @@ FullLoopbackStream incomingStream;
 #error Gamepad option must be enabled in order to use analog axis.
 #endif // ! INCLUDE_GAMEPAD
 #endif
+// END Gamepad support ===================
 
-//#define INCLUDE_ENCODERS                    //{"Name":"INCLUDE_ENCODERS","Type":"autodefine","Condition":"[ENABLED_ENCODERS_COUNT]>0","IsInput":true}
-//#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
-//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
-//#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
-//#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
+
+
+
+
 
 #if (defined(__AVR__))
 #include <avr\pgmspace.h>
@@ -92,7 +114,6 @@ FullLoopbackStream incomingStream;
 #include "SHButton.h"
 
 // ----------------------------------------------------- HW SETTINGS, PLEASE REVIEW ALL -------------------------------------------
-#define DEVICE_NAME "HelloWorldEsp" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
 
 #define ENABLE_MICRO_GAMEPAD 0           //{"Group":"GAMEPAD","Name":"ENABLE_MICRO_GAMEPAD","Title":"Enable arduino micro gamepad output for all the activated buttons/encoders","DefaultValue":"0","Type":"bool"}
 #define MICRO_GAMEPAD_ENCODERPRESSTIME 50 //{"Name":"MICRO_GAMEPAD_ENCODERPRESSTIME","Title":"Define how long (in milliseconds) the encoder related button will be hold after an encoder movement","DefaultValue":"50","Type":"int","Condition":"ENABLE_MICRO_GAMEPAD>0","Max":100}
@@ -366,8 +387,8 @@ SHRGBMatrixSunfounderSH104P shRGBMatrixSunfounderSH104P;
 
 // DF ROBOT - PCF8574AT
 #ifdef  I2CLCD_PCF8574AT
-#include "LiquidCrystal_I2C_DFRobot.h"
-#include "SHI2CLcd_PCF8574AT.h"
+#include <LiquidCrystal_I2C.h>
+#include <SHI2CLcd_PCF8574AT.h>
 LiquidCrystal_I2C I2CLCD(I2CLCD_ADDRESS, I2CLCD_WIDTH, I2CLCD_HEIGHT);
 #endif
 

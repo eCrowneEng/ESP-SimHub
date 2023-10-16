@@ -8,7 +8,8 @@
 
 
 // Adafruit_PCD8544 display = Adafruit_PCD8544(SCLK, DIN, DC, CS or SCE, RST);
-Adafruit_PCD8544 nokia1 = Adafruit_PCD8544(A0, A1, A2, A4, A3);
+#pragma message("Make sure these pins are configured properly");
+Adafruit_PCD8544 nokia1 = Adafruit_PCD8544(0, 1, 2, 4, 3);
 Adafruit_PCD8544 * nokia[] = { &nokia1 };
 
 class SHGLCD_NOKIA : public SHGLCD_Base

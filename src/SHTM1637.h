@@ -34,7 +34,6 @@ void TM1637_SetDisplayFromSerial(TM1637Display* screen)
 
 void TM1637_Init() {
 	for (int i = 0; i < TM1637_ENABLEDMODULES; i++) {
-		TM1637_screens[i]->init();
 		TM1637_screens[i]->setBrightness(4);
 		TM1637_screens[i]->clear();
 	}

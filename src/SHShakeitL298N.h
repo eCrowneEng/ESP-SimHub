@@ -6,12 +6,12 @@
 
 class SHShakeitL298N : public SHShakeitBase {
 private:
-	byte	pinL98N_enA;
-	byte	pinL98N_enB;
-	byte	pinL98N_in1;
-	byte	pinL98N_in2;
-	byte	pinL98N_in3;
-	byte	pinL98N_in4;
+	byte	pinL98N_enA = 0;
+	byte	pinL98N_enB = 0;
+	byte	pinL98N_in1 = 0;
+	byte	pinL98N_in2 = 0;
+	byte	pinL98N_in3 = 0;
+	byte	pinL98N_in4 = 0;
 public:
 	uint8_t motorCount() {
 		return 2;

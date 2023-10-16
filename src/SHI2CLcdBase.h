@@ -3,11 +3,10 @@
 
 #include <Arduino.h>
 
-
 class SHI2CLcdBase {
 private:
-	int _width;
-	int _height;
+	int _width = 0;
+	int _height = 0;
 public:
 
 	void begin(int width, int height, bool test) {
@@ -28,8 +27,8 @@ public:
 		}
 	}
 
-	virtual void setCursor(int x, int y);
-	virtual void print(String s);
+	virtual void setCursor(int x, int y) = 0;
+	virtual void print(String s) = 0;
 
 };
 
