@@ -33,12 +33,16 @@ public:
 		rowPins = row;
 
 		for (int x = 0; x < rowCount; x++) {
-
+			if (rowPins[x] < 0) {
+				continue;
+			}
 			pinMode(rowPins[x], INPUT);
 		}
 
 		for (int x = 0; x < colCount; x++) {
-
+			if (colPins[x] < 0) {
+				continue;
+			}
 			pinMode(colPins[x], INPUT_PULLUP);
 		}
 
@@ -52,16 +56,21 @@ public:
 				for (int colIndex = 0; colIndex < colCount; colIndex++) {
 
 					byte curCol = colPins[colIndex];
+					if (curCol < 0) {
+						continue;
+					}
 					pinMode(curCol, OUTPUT);
 					digitalWrite(curCol, LOW);
 
 					for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
 						byte rowCol = rowPins[rowIndex];
+						if (rowCol < 0) {
+							continue;
+						}
 						pinMode(rowCol, INPUT_PULLUP);
 						if (digitalRead(rowCol) == LOW) {
 							pressedButton = rowIndex * colCount + colIndex + 1;
 						}
-						//pinMode(rowCol, INPUT);
 					}
 
 					pinMode(curCol, INPUT);

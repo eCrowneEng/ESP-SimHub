@@ -498,6 +498,11 @@ public:
 #if DEBUG_TCP_BRIDGE
     Serial.printf("flushing with this much data: %d \n", availableLength);
 #endif
+      if (clients.size() == 0) {
+        // no clients to flush to
+        return;
+      }
+
       // read the available data from the stream, and put in in the buffer
       char sbuf[availableLength];
       this->outgoingStream->readBytes(sbuf, availableLength);
