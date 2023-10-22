@@ -48,6 +48,7 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
 //#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
 //#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
+//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 
 // Untested features, please open a GitHub Issue, or post in the discord if you try them
 //
@@ -72,7 +73,6 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_SHAKEIDUALVNH5019           //{"Name":"INCLUDE_SHAKEIDUALVNH5019","Type":"autodefine","Condition":"[DUALVNH5019_ENABLED]>0"}
 //#define INCLUDE_SHAKEITPWM                  //{"Name":"INCLUDE_SHAKEITPWM","Type":"autodefine","Condition":"[SHAKEITPWM_ENABLED_MOTORS]>0"}
 //#define INCLUDE_ENCODERS                    //{"Name":"INCLUDE_ENCODERS","Type":"autodefine","Condition":"[ENABLED_ENCODERS_COUNT]>0","IsInput":true}
-//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 //#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
 
