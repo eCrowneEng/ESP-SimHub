@@ -1,9 +1,9 @@
-# SimHub firmware for ESP8266 and ESP32
+# SimHub firmware for ESP32 and ESP8266
 
 Head over to the discord server to discuss this firmware: https://discord.gg/zw377qhj9c 
 
 ## What is this?
-Firmware source code for ESP8266 and ESP32 that is compatible with SimHub. It's derived from what SimHub lets you setup, but tweaked with a thin compatibility layer for the ESP8266 and ESP32.
+Firmware source code for ESP32 and ESP8266 that is compatible with SimHub. It's derived from what SimHub lets you setup, but tweaked with a thin compatibility layer for the ESP32 and ESP8266.
 
 ## Why would you want to do this?
 ESP8266 is cheaper and more powerful that most arduinos boards and fairly popular in the IoT Community. The ESP32 is a very handy little monster to use too.
