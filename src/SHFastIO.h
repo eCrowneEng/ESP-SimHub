@@ -4,8 +4,8 @@
 
 class FastDigitalPin {
 private:
-	uint8_t bit = 0;
-	uint8_t port = 0;
+	unsigned long bit = 0;
+	unsigned long port = 0;
 	bool pinIsValid = false;
 public:
 
