@@ -6,7 +6,7 @@
 // There are many color models. The most common ones will use GRB. 
 //  If you're using other types feel free to read more here: 
 // https://github.com/Makuna/NeoPixelBus/wiki/Neo-Features
-#define colorsec NeoGrbFeature // A three-element color in the order of Green, Red, and then Blue. This is used for SK6812(grb), WS2811, and WS2812.
+#define colorSpec NeoGrbFeature // A three-element color in the order of Green, Red, and then Blue. This is used for SK6812(grb), WS2811, and WS2812.
 
 
 // We use different methods for each type of board based on available features and their limitations
@@ -68,7 +68,7 @@
 #define DATA_PIN 2
 #endif
 
-NeoPixelBusLg<colorsec, method> neoLedStrip(LED_COUNT, DATA_PIN);
+NeoPixelBusLg<colorSpec, method> neoLedStrip(LED_COUNT, DATA_PIN);
 
 void neoPixelBusBegin()
 {
