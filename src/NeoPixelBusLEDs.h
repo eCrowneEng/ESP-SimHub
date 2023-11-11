@@ -1,3 +1,4 @@
+#include <typeinfo>
 #include <NeoPixelBusLg.h>
 #define LED_COUNT 24
 #define RIGHTTOLEFT 0
@@ -58,20 +59,37 @@
 //  Feel free to investigate the others, understand their drawbacks and implement them if you want
 // https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
-// FASTER; YOU CANNOT PICK PINS OTHER THAN GPIO2 ("D4" in nodemcu, d1Mini and others, but verify)
+// DMA (I2S)
+// FASTEST, BUT only over WIFI AND you cannot receive serial data, only send
+// Only GPIO3 (usually named as RX, RDX0)
+#if INCLUDE_WIFI
+// #define method NeoEsp8266DmaWs2812xMethod
+#endif
+
+// UART
+// FASTER; Only GPIO2 ("D4" in nodemcu, d1Mini and others, but verify)
 #define method NeoEsp8266Uart1Ws2812xMethod
 
-// SLOWEST; pins 0-15 (raw gpio number, not the D{1}, D{2} numbers)
+// BitBang
+// SLOWEST and least stable over WiFi; pins 0-15 (raw gpio number, not the D{1}, D{2} numbers)
 //#define method NeoEsp8266BitBangWs2812xMethod
 
+// IF using DMA, this will be ignored and only GPIO3 will be used
 // IF using UART, this will be ignored and only GPIO2 will be used
 #define DATA_PIN 2
 #endif
 
-NeoPixelBusLg<colorSpec, method> neoLedStrip(LED_COUNT, DATA_PIN);
+NeoPixelBusLg<colorSpec, method, NeoGammaTableMethod> neoLedStrip(LED_COUNT, DATA_PIN);
 
 void neoPixelBusBegin()
 {
+#if ESP8266 && INCLUDE_WIFI
+if (typeid(method).name() == typeid(NeoEsp8266DmaWs2812xMethod).name()) {
+    Serial.begin(115200);
+    while (!Serial); // wait for serial attach
+    Serial.println("enabling serial due to the neopixelbus method used");
+}
+#endif
     neoLedStrip.Begin();
     neoLedStrip.Show();
 
@@ -80,9 +98,8 @@ void neoPixelBusBegin()
         neoLedStrip.SetLuminance(155);
         for (int i = 0; i < LED_COUNT; i++)
         {
-            neoLedStrip.SetPixelColor(i, RgbColor(random(0, 255), random(0, 255), random(0, 255)));
+            neoLedStrip.SetPixelColor(i, RgbColor(120, 0, 0));
         }
-        delay(50);
         neoLedStrip.Show();
     }
     neoLedStrip.SetLuminance(255);
@@ -169,9 +186,14 @@ void neoPixelBusRead()
 
         mode = FlowSerialTimedRead();
     }
+}
 
-    if (LED_COUNT > 0)
-    {
+void neoPixelBusShow() {
+    if (LED_COUNT > 0 && neoLedStrip.IsDirty()) {
         neoLedStrip.Show();
     }
+}
+
+int neoPixelBusCount() {
+    return LED_COUNT;
 }

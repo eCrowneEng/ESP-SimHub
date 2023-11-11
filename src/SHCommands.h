@@ -321,7 +321,15 @@ void Command_7SegmentsData() {
 }
 
 void Command_RGBLEDSCount() {
-	FlowSerialWrite((byte)(WS2812B_RGBLEDCOUNT + PL9823_RGBLEDCOUNT + WS2801_RGBLEDCOUNT));
+	FlowSerialWrite(
+		(byte)(
+			WS2812B_RGBLEDCOUNT + 
+			PL9823_RGBLEDCOUNT +
+			WS2801_RGBLEDCOUNT
+#ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
+	+ neoPixelBusCount()
+#endif
+			));
 	FlowSerialFlush();
 }
 
@@ -336,13 +344,18 @@ void Command_RGBLEDSData()
 #ifdef INCLUDE_WS2801
 	shRGBLedsWS2801.read();
 #endif
+#ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
+	neoPixelBusRead();
+#endif
 #ifdef INCLUDE_WS2812B
 	shRGBLedsWS2812B.show();
 #endif
 #ifdef INCLUDE_WS2801
 	shRGBLedsWS2801.show();
 #endif
-
+#ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
+	neoPixelBusShow();
+#endif
 	// Acq !
 	FlowSerialWrite(0x15);
 }

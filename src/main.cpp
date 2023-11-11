@@ -12,7 +12,7 @@
 #endif
 
 
-#define INCLUDE_WIFI false
+#define INCLUDE_WIFI true
 // Less secure if you plan to commit or share your files, but saves a bunch of memory. 
 //  If you hardcode credentials the device will only work in your network
 #define USE_HARDCODED_CREDENTIALS false
@@ -35,15 +35,11 @@ FullLoopbackStream incomingStream;
 
 #endif // INCLUDE_WIFI
 
-
-// J revision sketch
-#define VERSION 'j'
-
 #define DEVICE_NAME "HelloWorldEsp" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
 
 // Known working features:
 //  
-//#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
+// #define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
 //#define INCLUDE_RGB_MATRIX_NEOPIXELBUS      // use this instead of INCLUDE_WS2812B_MATRIX
 //#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
@@ -1001,6 +997,9 @@ Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,
 
 #endif
 
+// J revision sketch. Don't modify this
+#define VERSION 'j'
+
 #include "SHCustomProtocol.h"
 SHCustomProtocol shCustomProtocol;
 #include "SHCommands.h"
@@ -1324,6 +1323,9 @@ void setup()
 #ifdef INCLUDE_GAMEPAD
 	Joystick.sendState();
 #endif
+#ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
+	neoPixelBusBegin();
+#endif
 }
 
 #ifdef  INCLUDE_ENCODERS
@@ -1414,7 +1416,6 @@ void loop() {
 #ifdef INCLUDE_GAMEPAD
 	UpdateGamepadState();
 #endif
-
 	shCustomProtocol.loop();
 
 	// Wait for data
