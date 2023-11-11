@@ -315,7 +315,7 @@ public:
     WM_STA_IPconfig._sta_static_sn   = netMask;
     AsyncWebServer webServer(80);
 
-#if ( USING_ESP32_S2 || USING_ESP32_C3 ) 
+#if ( USING_ESP32_S2 || USING_ESP32_C3 ) // maybe S3 too?
     // does AsyncDNSServer not work with these boards?
     //  let me know
     ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, NULL, "AutoConnectAP");

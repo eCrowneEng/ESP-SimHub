@@ -1,10 +1,15 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
-// This is used as a hint for the IDE, but the real values should come from platformio.ini environment
-//  as a matter of fact, you need to comment out BOTH if you are compiling for both environments
-//#define ESP32 true // if using ESP8266, comment out
-#define ESP8266 true // if using ESP32, comment out
+// No longer have to define whether it's an ESP32 or ESP8266, just do an initial compilation and
+//  VSCode will pick  up the right environment from platformio.ini
+ 
+#if ESP32
+// certain features are gated for these boards, so make sure to set them if you're using them
+#define USING_ESP32_C3 false
+#define USING_ESP32_S2 false
+#define USING_ESP32_S3 false
+#endif
 
 
 #define INCLUDE_WIFI false
@@ -38,17 +43,19 @@ FullLoopbackStream incomingStream;
 
 // Known working features:
 //  
-//#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
-//#define INCLUDE_WS2812B                     //{"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
-//#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
+//#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
+//#define INCLUDE_RGB_MATRIX_NEOPIXELBUS      // use this instead of INCLUDE_WS2812B_MATRIX
+//#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
+//#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
+//#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
+//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
-//#define INCLUDE_I2CLCD                      //{"Name":"INCLUDE_I2CLCD","Type":"autodefine","Condition":"[I2CLCD_enabled]>0"}
+//#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_OLED                        //{"Name":"INCLUDE_OLED","Type":"autodefine","Condition":"[ENABLED_OLEDLCD]>0"}
+//#define INCLUDE_I2CLCD                      //{"Name":"INCLUDE_I2CLCD","Type":"autodefine","Condition":"[I2CLCD_enabled]>0"}
 //#define INCLUDE_MAX7221MATRIX               //{"Name":"INCLUDE_MAX7221MATRIX","Type":"autodefine","Condition":"[MAX7221_MATRIX_ENABLED]>0"}
 //#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
 //#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
-//#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
-//#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 
 // Untested features, please open a GitHub Issue, or post in the discord if you try them
 //
@@ -256,6 +263,25 @@ SHMatrixMAX7219 shMatrixMAX7219;
 SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 #endif
 
+
+
+// -------------------------------------------------------
+// NeopixelBus 
+// -------------------------------------------------------
+#ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
+// Configure it here!
+#include <NeoPixelBusLEDs.h>
+#endif
+
+
+// -------------------------------------------------------
+// NeopixelBus Matrix
+// -------------------------------------------------------
+#ifdef INCLUDE_RGB_MATRIX_NEOPIXELBUS
+
+#endif
+
+
 // -------------------------------------------------------------------------------------------------------
 // WS2812b RGBLEDS ---------------------------------------------------------------------------------------
 // http://www.dx.com/p/8-bit-ws2812-5050-rgb-led-development-board-w-built-in-full-color-drive-387667
@@ -279,8 +305,25 @@ SHRGBLedsNeoPixelFastLeds shRGBLedsWS2812B;
 SHRGBLedsNeoPixel shRGBLedsWS2812B;
 Adafruit_NeoPixel WS2812B_strip = Adafruit_NeoPixel(WS2812B_RGBLEDCOUNT, WS2812B_DATAPIN, (WS2812B_RGBENCODING == 0 ? NEO_GRB : (WS2812B_RGBENCODING == 1 ? NEO_RGB : NEO_BRG)) + NEO_KHZ800);
 #endif
-
 #endif
+
+// -------------------------------------------------------------------------------------------------------
+// WS2812b MATRIX ---------------------------------------------------------------------------------------
+// http://www.dx.com/p/8-bit-ws2812-5050-rgb-led-development-board-w-built-in-full-color-drive-387667
+// -------------------------------------------------------------------------------------------------------
+// WS2812b chained RGBLEDS count
+// 0 disabled, > 0 enabled
+#define WS2812B_MATRIX_ENABLED 0                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
+
+#ifdef INCLUDE_WS2812B_MATRIX
+#define WS2812B_MATRIX_DATAPIN 6                 //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#define WS2812B_MATRIX_SERPENTINELAYOUT 0        //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#define WS2812B_MATRIX_SERPENTINELAYOUTREVERSE 0 //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUTREVERSE","Title":"Reverse serpentine layout start direction","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0 && WS2812B_MATRIX_SERPENTINELAYOUT>0"}
+
+#include "SHRGBMatrixNeoPixelFastLed.h"
+SHRGBMatrixNeoPixelFastLed shRGBMatrixWS2812B;
+#endif
+
 
 // -------------------------------------------------------------------------------------------------------
 // PL9823 RGBLEDS ---------------------------------------------------------------------------------------
@@ -313,23 +356,6 @@ SHRGBLedsNeoPixel shRGBLedsPL9823;
 #define WS2801_TESTMODE 0    //{"Name":"WS2801_TESTMODE","Title":"TESTING MODE : Light up all configured leds (in red color) at arduino startup\r\nIt will clear after simhub connection","DefaultValue":"0","Type":"bool","Condition":"WS2801_RGBLEDCOUNT>0"}
 Adafruit_WS2801 WS2801_strip = Adafruit_WS2801(WS2801_RGBLEDCOUNT, WS2801_DATAPIN, WS2801_CLOCKPIN);
 SHRGBLedsWS2801 shRGBLedsWS2801;
-#endif
-
-// -------------------------------------------------------------------------------------------------------
-// WS2812b MATRIX ---------------------------------------------------------------------------------------
-// http://www.dx.com/p/8-bit-ws2812-5050-rgb-led-development-board-w-built-in-full-color-drive-387667
-// -------------------------------------------------------------------------------------------------------
-// WS2812b chained RGBLEDS count
-// 0 disabled, > 0 enabled
-#define WS2812B_MATRIX_ENABLED 0                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
-
-#ifdef INCLUDE_WS2812B_MATRIX
-#define WS2812B_MATRIX_DATAPIN 6                 //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
-#define WS2812B_MATRIX_SERPENTINELAYOUT 0        //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
-#define WS2812B_MATRIX_SERPENTINELAYOUTREVERSE 0 //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUTREVERSE","Title":"Reverse serpentine layout start direction","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0 && WS2812B_MATRIX_SERPENTINELAYOUT>0"}
-
-#include "SHRGBMatrixNeoPixelFastLed.h"
-SHRGBMatrixNeoPixelFastLed shRGBMatrixWS2812B;
 #endif
 
 // -------------------------------------------------------------------------------------------------------
