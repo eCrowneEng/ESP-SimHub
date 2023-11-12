@@ -315,7 +315,7 @@ public:
     WM_STA_IPconfig._sta_static_sn   = netMask;
     AsyncWebServer webServer(80);
 
-#if ( USING_ESP32_S2 || USING_ESP32_C3 ) 
+#if ( CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32C3 ) // maybe S3 too?
     // does AsyncDNSServer not work with these boards?
     //  let me know
     ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, NULL, "AutoConnectAP");
@@ -323,7 +323,6 @@ public:
     AsyncDNSServer dnsServer;
     ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "AutoConnectAP");
 #endif
-
     ESPAsync_wifiManager.setDebugOutput(DEBUG_TCP_BRIDGE);
 
     Router_SSID = ESPAsync_wifiManager.WiFi_SSID();

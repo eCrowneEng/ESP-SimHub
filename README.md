@@ -23,14 +23,16 @@ SimHub assumes there is a serial port that it can talk to, and a certain protoco
 
 Instead of having a local device connected to the computer directly, we create a "virual com port" that forwards all communication to a certain IP.
 
-On the Microcontroller side, we modify the code to create a socket server receiving data on the right port, and we put that data in a buffer (similar to
+On the Microcontroller side, we modify the code to create a socket server receiving data on the right port, we put that data in a buffer (similar to
 the serial port) and we allow the modified Arduino SimHub client to consume it from the buffer, as if it was a normal seial connection.
 
 ## How to configure the firmware to use WiFi
 Set the [preprocessor directive](https://cplusplus.com/doc/tutorial/preprocessor/) called INCLUDE_WIFI to true (in src/main.cpp). Set DEBUG_TCP_BRIDGE to true as well, and set `monitor_speed = 115200` in `platformio.ini`.
 
 ## How to connect the ESP to your WiFi
-Upload a [WiFi enabled](https://github.com/eCrowneEng/ESP-SimHub/blob/main/src/main.cpp#L4) firmware. Connect USB to computer and open the serial monitor with `115200` baud rate (to catch debug messages). Power the ESP up. It will itself create a new WiFi network (ESP-{a bunch of letters and numbers}) that you can connect to from your phone or computer. Connect to that network and navigate to `http://192.168.4.1`, observe a [captive portal](https://en.wikipedia.org/wiki/Captive_portal). Configure your WiFi and then disconnect.
+Upload a [WiFi enabled](https://github.com/eCrowneEng/ESP-SimHub/blob/main/src/main.cpp#L4) firmware. Connect USB to computer and open the serial monitor with `115200` baud rate (to catch debug messages). Power the ESP up. 
+
+(If you hardcoded WiFi credentials already, skip this paragraph) It will itself create a new WiFi network (ESP-{a bunch of letters and numbers}) that you can connect to from your phone or computer. Connect to that network and navigate to `http://192.168.4.1`, observe a [captive portal](https://en.wikipedia.org/wiki/Captive_portal). Configure your WiFi and then disconnect.
 
 Once the ESP is connected to a network, it won't create its own. The device should output the IP address it's using, write it down, you'll need it.
 
@@ -47,5 +49,4 @@ Some Arduino APIs for the ESP32 are different, so not everything will work out o
 
 ### How to enable ESP32
 - Open `platformio.ini`, comment out the ESP8266 env and Uncomment the ESP32 env. Also specify your board in the env, by default is set to something like `esp32doit-devkit-v1` because I owned this board, but there are tons of boards for the ESP32, as you can see [here](https://docs.platformio.org/en/latest/boards/index.html#espressif-32). Click on one and it will show you what's its id. 
-- In `src/main.cpp` comment out `#define ESP8266` and uncomment `#define ESP32`.
 - Make sure to use the correct pin numbers for the ESP32 as opposed to aliases such as D1, D2, D3.. etc
