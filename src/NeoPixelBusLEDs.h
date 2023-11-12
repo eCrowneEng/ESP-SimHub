@@ -18,29 +18,24 @@
 //  board specific limitations
 // https://github.com/Makuna/NeoPixelBus/wiki/ESP32-NeoMethods
 
-//******
-// I2S
-// little CPU Usage, more memory; Not available for S3 or C3 boards
-// Supports any output pin
-//******
-#if (!USING_ESP32_S3 && !USING_ESP32_C3) // not supported by these boards 
-#define method NeoEsp32I2s0Ws2812xMethod // Uses the I2S 0 peripheral ESP32S2 only supports one I2S
-#endif
-
-//******
-// Parallel Channels
-// medium CPU usage and memory
-// Supports any output pin
-//******
-// #define method NeoEsp32I2s0X8Ws2812xMethod //Uses the I2S 0 peripheral in 8 channel parallel mode
-// #define method NeoEsp32I2s0X16Ws2812xMethod //Uses the I2S 0 peripheral in 16 channel parallel mode
 
 //******
 // RMT
 // little CPU Usage and low memory but many interrupts run for it and requires hardware buffer
 // Supports all pins below GPIO34
 //******
-// #define method NeoEsp32Rmt0Ws2812xMethod
+#define method NeoEsp32Rmt0Ws2812xMethod
+
+//******
+// I2S
+// little CPU Usage, more memory; Not available for S3 or C3 boards
+// Supports any output pin
+//******
+#if ( !CONFIG_IDF_TARGET_ESP32S2 || !CONFIG_IDF_TARGET_ESP32C3 ) // not supported by these boards 
+//#define method NeoEsp32I2s0X8Ws2812xMethod // Uses the I2S 0 peripheral in 8 channel parallel mode
+//#define method NeoEsp32I2s0X16Ws2812xMethod // Uses the I2S 0 peripheral in 16 channel parallel mode
+//#define method NeoEsp32I2s0Ws2812xMethod // Uses the I2S 0 peripheral
+#endif
 
 //******
 // BitBang
@@ -49,8 +44,9 @@
 //******
 // #define method NeoEsp32BitBangWs2812xMethod
 
+
 // Pick your GPIO pin based on the limitations of the selected method above
-#define DATA_PIN 2
+#define DATA_PIN 8
 
 #else
 
@@ -67,12 +63,15 @@
 #endif
 
 // UART
-// FASTER; Only GPIO2 ("D4" in nodemcu, d1Mini and others, but verify)
+// FASTER; 
+// Only GPIO2 ("D4" in nodemcu, d1Mini and others, but verify)
 #define method NeoEsp8266Uart1Ws2812xMethod
 
 // BitBang
-// SLOWEST and least stable over WiFi; pins 0-15 (raw gpio number, not the D{1}, D{2} numbers)
+// SLOWEST and least stable over WiFi; 
+// pins 0-15 (raw gpio number, not the D{1}, D{2} numbers)
 //#define method NeoEsp8266BitBangWs2812xMethod
+
 
 // IF using DMA, this will be ignored and only GPIO3 will be used
 // IF using UART, this will be ignored and only GPIO2 will be used

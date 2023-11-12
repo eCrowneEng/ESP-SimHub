@@ -3,16 +3,8 @@
 
 // No longer have to define whether it's an ESP32 or ESP8266, just do an initial compilation and
 //  VSCode will pick  up the right environment from platformio.ini
- 
-#if ESP32
-// certain features are gated for these boards, so make sure to set them if you're using them
-#define USING_ESP32_C3 false
-#define USING_ESP32_S2 false
-#define USING_ESP32_S3 false
-#endif
 
-
-#define INCLUDE_WIFI true
+#define INCLUDE_WIFI false
 // Less secure if you plan to commit or share your files, but saves a bunch of memory. 
 //  If you hardcode credentials the device will only work in your network
 #define USE_HARDCODED_CREDENTIALS false
@@ -39,7 +31,7 @@ FullLoopbackStream incomingStream;
 
 // Known working features:
 //  
-// #define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
+//#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
 //#define INCLUDE_RGB_MATRIX_NEOPIXELBUS      // use this instead of INCLUDE_WS2812B_MATRIX
 //#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
