@@ -32,7 +32,6 @@ FullLoopbackStream incomingStream;
 // Known working features:
 //  
 //#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
-//#define INCLUDE_RGB_MATRIX_NEOPIXELBUS      // use this instead of INCLUDE_WS2812B_MATRIX
 //#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
 //#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
@@ -259,14 +258,6 @@ SHMatrixHT16H33SingleColor shMatrixHT16H33SingleColor;
 #ifdef INCLUDE_RGB_LEDS_NEOPIXELBUS
 // Configure it here!
 #include <NeoPixelBusLEDs.h>
-#endif
-
-
-// -------------------------------------------------------
-// NeopixelBus Matrix
-// -------------------------------------------------------
-#ifdef INCLUDE_RGB_MATRIX_NEOPIXELBUS
-
 #endif
 
 
