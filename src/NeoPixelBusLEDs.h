@@ -1,13 +1,36 @@
+/**
+ * Original implementation and testing by moriusz: https://github.com/moriusz
+*/
+
 #include <typeinfo>
 #include <NeoPixelBusLg.h>
+#include <string>
+
+/****************************
+ * 
+ * Configuration Starts here
+ * 
+ ************************** */
+
 #define LED_COUNT 24
 #define RIGHTTOLEFT 0
 #define TEST_MODE 1
 
-// There are many color models. The most common ones will use GRB. 
-//  If you're using other types feel free to read more here: 
+// The color order that your LED strip uses
 // https://github.com/Makuna/NeoPixelBus/wiki/Neo-Features
 #define colorSpec NeoGrbFeature // A three-element color in the order of Green, Red, and then Blue. This is used for SK6812(grb), WS2811, and WS2812.
+//#define colorSpec NeoRgbFeature //A three-element color in the order of Red, Green, and then Blue. Some older pixels used this. 
+//#define colorSpec NeoBgrFeature //A three-element color in the order of Blue, Red, and then Green.
+
+
+// Identify your LED model or protocol
+// Ws2812x << default for this library, no changes required; WS2812a, WS2812b, WS2812c, etc The most compatible
+// Sk6812
+// Apa106
+// 400kbps << old slower speed standard that started this all
+// .. or any of these but inverted.. example: Ws2812xInverted
+//
+// Then replace Ws2812x in the methods below with your LED Model/protocol
 
 
 // We use different methods for each type of board based on available features and their limitations
@@ -26,6 +49,7 @@
 //******
 #define method NeoEsp32Rmt0Ws2812xMethod
 
+
 //******
 // I2S
 // little CPU Usage, more memory; Not available for S3 or C3 boards
@@ -37,9 +61,10 @@
 //#define method NeoEsp32I2s0Ws2812xMethod // Uses the I2S 0 peripheral
 #endif
 
+
 //******
 // BitBang
-// Uses a lot of CPU and interrupts such as the ones ran for WiFi make it unstable.
+// Uses a lot of CPU, and interrupts such as the ones ran for WiFi make it unstable.
 // Supports all pins below GPIO32
 //******
 // #define method NeoEsp32BitBangWs2812xMethod
@@ -51,21 +76,25 @@
 #else
 
 //****** ESP8266 ******
-// There are many methods, but the most convenient are UART1 or bitbang
-//  Feel free to investigate the others, understand their drawbacks and implement them if you want
+// There are other methods, but We're picking the most convenient ones here.
+//  Feel free to investigate the others, understand their drawbacks and use them if you want
 // https://github.com/Makuna/NeoPixelBus/wiki/ESP8266-NeoMethods
 
 // DMA (I2S)
 // FASTEST, BUT only over WIFI AND you cannot receive serial data, only send
 // Only GPIO3 (usually named as RX, RDX0)
+//  this method requires that we initialize serial before the strip
 #if INCLUDE_WIFI
 // #define method NeoEsp8266DmaWs2812xMethod
 #endif
+
 
 // UART
 // FASTER; 
 // Only GPIO2 ("D4" in nodemcu, d1Mini and others, but verify)
 #define method NeoEsp8266Uart1Ws2812xMethod
+// -- There are other UART methods, that may or may not break serial, this is the safest.
+
 
 // BitBang
 // SLOWEST and least stable over WiFi; 
@@ -78,12 +107,35 @@
 #define DATA_PIN 2
 #endif
 
+// Initial color to fill the strip before SimHub connects to the device 
+// R, G, B format from 0-255.. 
+//  Be aware that (255, 255, 255) may consume a lot of current
+//  more than your device can provide, which can damage it. Start with lower numbers 
+//  ex: (50, 0, 0) is red and (100, 0, 0) is still red, just brighter
+//  See this: https://learn.adafruit.com/adafruit-neopixel-uberguide/powering-neopixels#estimating-power-requirements-2894486
+auto initialColor = RgbColor(120, 0, 0);
+
+
+/*************************
+ * 
+ * Configuration ends here
+ * 
+ ********************** */
+
+// Instantiate an LED Strip
 NeoPixelBusLg<colorSpec, method, NeoGammaTableMethod> neoLedStrip(LED_COUNT, DATA_PIN);
 
+
+/**
+ * Initialization function: prepares the strip and other related things
+ */
 void neoPixelBusBegin()
 {
 #if ESP8266 && INCLUDE_WIFI
-if (typeid(method).name() == typeid(NeoEsp8266DmaWs2812xMethod).name()) {
+const std::type_info &classType = typeid(method);
+const char *className = classType.name();
+const char *prefix = "NeoEsp8266Dma";
+if (std::string(className).find(prefix) == 0) {
     Serial.begin(115200);
     while (!Serial); // wait for serial attach
     Serial.println("enabling serial due to the neopixelbus method used");
@@ -97,7 +149,7 @@ if (typeid(method).name() == typeid(NeoEsp8266DmaWs2812xMethod).name()) {
         neoLedStrip.SetLuminance(155);
         for (int i = 0; i < LED_COUNT; i++)
         {
-            neoLedStrip.SetPixelColor(i, RgbColor(120, 0, 0));
+            neoLedStrip.SetPixelColor(i, initialColor);
         }
         neoLedStrip.Show();
     }
