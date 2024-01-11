@@ -7,9 +7,11 @@
 #include "SHGLCD_base.h"
 
 
+// When using a 0.98" OLED w/ an SSD1306 driver, the resolution will almost always be 128x64
+#define SCREEN_WIDTH 128 // OLED width
+#define SCREEN_HEIGHT 64 // OLED height 
 #define OLED_RESET 4
-
-Adafruit_SSD1306 glcd1(OLED_RESET);
+Adafruit_SSD1306 glcd1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 * oled[] = { &glcd1 };
 
 class SHGLCD_I2COLED : public SHGLCD_Base
