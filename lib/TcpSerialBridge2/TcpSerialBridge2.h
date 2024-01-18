@@ -524,8 +524,10 @@ private:
   void handleData(void* arg, AsyncClient* client, void *data, size_t len) {
 #if DEBUG_TCP_BRIDGE
 	  Serial.printf("\n <--- data received from client %s \n", client->remoteIP().toString().c_str());
-	  Serial.write((uint8_t*)data, len);
-    Serial.println(" ");
+    // this line may cause problems with the c++ linker. If you need deep debugging the actual data received, and it compiles fine if you
+    //  remove the commenting below, then you're good.
+    //Serial.write((uint8_t*)data, len);
+    //Serial.println(" ");
 #endif
     const uint8_t *castData = (uint8_t*)data;
     this->incomingStream->write(castData, (size_t)len);
