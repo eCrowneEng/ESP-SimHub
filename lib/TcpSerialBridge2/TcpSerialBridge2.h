@@ -526,7 +526,7 @@ private:
 	  Serial.printf("\n <--- data received from client %s \n", client->remoteIP().toString().c_str());
     // this line may cause problems with the c++ linker. If you need deep debugging the actual data received, and it compiles fine if you
     //  remove the commenting below, then you're good.
-	  //Serial.write((uint8_t*)data, len);
+    //Serial.write((uint8_t*)data, len);
     //Serial.println(" ");
 #endif
     const uint8_t *castData = (uint8_t*)data;
