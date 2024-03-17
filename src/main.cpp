@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
+#include <Wire.h>
 
 // No longer have to define whether it's an ESP32 or ESP8266, just do an initial compilation and
 //  VSCode will pick  up the right environment from platformio.ini
@@ -8,6 +9,14 @@
 // Less secure if you plan to commit or share your files, but saves a bunch of memory. 
 //  If you hardcode credentials the device will only work in your network
 #define USE_HARDCODED_CREDENTIALS false
+#define IC2_SERIAL_BYPASS true
+
+#if IC2_SERIAL_BYPASS
+	#define WIRE Wire 
+	#define IC2_MASTER 	true
+	#define IC2_SLAVE	false
+	#define IC2_ADDRESS 0x08
+#endif
 
 #if INCLUDE_WIFI
 #if USE_HARDCODED_CREDENTIALS
@@ -34,7 +43,7 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
 //#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
 //#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
-//#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
+#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
 //#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
@@ -543,10 +552,10 @@ SHGamepadAxis SHGAMEPADAXIS03(GAMEPAD_AXIS_03_PIN, 2, GAMEPAD_AXIS_03_MINVALUE, 
 // ----------------------- ADDITIONAL BUTTONS ---------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-Press-Buttons
 // ----------------------------------------------------------------------------------------------------------
-#define ENABLED_BUTTONS_COUNT 0 //{"Group":"Additional Buttons","Name":"ENABLED_BUTTONS_COUNT","Title":"Additional buttons (directly connected to the arduino, 12 max) buttons count","DefaultValue":"0","Type":"int","Max":12}
+#define ENABLED_BUTTONS_COUNT 1 //{"Group":"Additional Buttons","Name":"ENABLED_BUTTONS_COUNT","Title":"Additional buttons (directly connected to the arduino, 12 max) buttons count","DefaultValue":"0","Type":"int","Max":12}
 #ifdef  INCLUDE_BUTTONS
 
-#define BUTTON_PIN_1 3          //{"Name":"BUTTON_PIN_1","Title":"1'st Additional button digital pin","DefaultValue":"3","Type":"pin;Button 1","Condition":"ENABLED_BUTTONS_COUNT>=1"}
+#define BUTTON_PIN_1 D3          //{"Name":"BUTTON_PIN_1","Title":"1'st Additional button digital pin","DefaultValue":"3","Type":"pin;Button 1","Condition":"ENABLED_BUTTONS_COUNT>=1"}
 #define BUTTON_WIRINGMODE_1 0   //{"Name":"BUTTON_WIRINGMODE_1","Title":"1'st Additional button wiring","DefaultValue":"0","Type":"list","Condition":"ENABLED_BUTTONS_COUNT>=1","ListValues":"0,Pin to GND;1,VCC to pin"}
 #define BUTTON_LOGICMODE_1 0    //{"Name":"BUTTON_LOGICMODE_1","Title":"1'st Additional button logic","DefaultValue":"0","Type":"list","Condition":"ENABLED_BUTTONS_COUNT>=1","ListValues":"0,Normal;1,Reversed"}
 
@@ -991,6 +1000,7 @@ unsigned long lastMatrixRefresh = 0;
 
 
 void idle(bool critical) {
+	//Serial.printf("\n [%d] Ejecutando la función idle %d",millis(),critical);
 #if INCLUDE_WIFI
 	yield();
 	ECrowneWifi::flush();
@@ -1082,16 +1092,49 @@ void EncoderPositionChanged(int encoderId, int position, byte direction) {
 #endif
 }
 #endif
+uint8_t endWireTransmission(bool stop){
+	uint8_t error=Wire.endTransmission(stop);
+	if(error=0){
+		Serial.printf("\n Correct wire close \n");
+	}
+	if(error==1){
+		Serial.printf("\n Wire buffer exausted \n");
+	}
+	if(error==2){
+		Serial.printf("\n received NACK on transmit of address.\n");
+	}
+	if(error==3){
+		Serial.printf("received NACK on transmit of data.");
+	}
+	if(error==4){
+		Serial.printf(" other error.");
+	}
+	if(error==5){
+		Serial.printf("timeout");
+	}
+	Serial.flush();
+	return error;
 
+}
 void buttonStatusChanged(int buttonId, byte Status) {
 #ifdef INCLUDE_GAMEPAD
 	Joystick.setButton(TM1638_ENABLEDMODULES * 8 + buttonId - 1, Status);
 	Joystick.sendState();
 #else
-	arqserial.CustomPacketStart(0x03, 2);
-	arqserial.CustomPacketSendByte(buttonId);
-	arqserial.CustomPacketSendByte(Status);
-	arqserial.CustomPacketEnd();
+	#if IC2_SERIAL_BYPASS
+		Wire.beginTransmission(0x08); /* begin with device address 8 */
+		arqserial.I2CustomPacketStart(0x03,2);
+		arqserial.I2CustomPacketSendByte(buttonId);
+		arqserial.I2CustomPacketSendByte(Status);
+		arqserial.I2CustomPacketEnd();
+		endWireTransmission(true);
+	#else
+		arqserial.CustomPacketStart(0x03,2);
+		arqserial.CustomPacketSendByte(buttonId);
+		arqserial.CustomPacketSendByte(Status);
+		arqserial.CustomPacketEnd();
+	#endif    
+
 #endif
 }
 
@@ -1109,6 +1152,76 @@ void buttonMatrixStatusChanged(int buttonId, byte Status) {
 }
 #endif
 
+
+void resendToSerialFromMasterDevice(size_t howManyChars){
+	// FlowSerialDebugPrintLn("Received data");
+ //int recvBytes=0;
+
+// int buttonId=-1;
+ //byte buttonStatus=0;
+
+ while (0 <Wire.available()) {
+    char c = Wire.read();      /* receive byte as a character */
+	// if(recvBytes==3){
+	// 	buttonId=c;
+	// }
+	// if(recvBytes==4){
+	// 	buttonStatus=c;
+	// }
+	// recvBytes++;
+   // Serial.write(c);
+   //	 Serial.flush();
+ //   Serial.print(c);           /* print the character */
+	FlowSerialWrite(c);
+  }
+	// buttonStatusChanged(buttonId,buttonStatus);
+ //Serial.println();             /* to newline */
+}
+
+
+bool isSlaveAvailable(){
+	Wire.beginTransmission(IC2_ADDRESS);
+    uint8_t error = endWireTransmission(true);
+
+	if(error==0){
+		Serial.printf("\n Slave device detected at address 8\n");
+		return true;
+	}
+	return false;
+}
+
+/** SETUP SERIAL BYPASS IC2 MASTER, USE WHEN THIS DEVICE COMMAND THE SENDING WORKFLOW*/
+void ic2SetupMaster(){
+	WIRE.begin();
+	while(!isSlaveAvailable()){
+			Serial.printf("\n Slave device not available, retrying 1 sec later");
+			delay(1000);
+	};
+}
+
+/** SETUP SERIAL BYPASS IC2 SLAVE, USE WHEN THIS DEVICE IS CONNECTED TO SIMHUB*/
+void ic2SetupSlave(){
+	Wire.begin(IC2_ADDRESS);
+	Wire.onReceive(resendToSerialFromMasterDevice); /* register receive event */
+}
+
+
+void ic2SetupSerialBypass(){
+ #if IC2_MASTER
+	ic2SetupMaster();
+ #endif
+ #if IC2_SLAVE
+	ic2SetupSlave();
+ #endif
+
+}
+
+
+
+/*****
+ * 
+ * SETUP DEVICES ENABLED
+*/
 void setup()
 {
 #if INCLUDE_WIFI
@@ -1236,7 +1349,7 @@ void setup()
 	shMatrixHT16H33SingleColor.begin(ADA_HT16K33_SINGLECOLORMATRIX_I2CADDRESS);
 #endif
 
-#ifdef INCLUDE_OLED
+#ifdef INCLUDE_OLEDPus
 	shGLCD.Init();
 #endif
 
@@ -1293,6 +1406,14 @@ void setup()
 
 	shCustomProtocol.setup();
 	arqserial.setIdleFunction(idle);
+	Serial.begin(115200);
+	delay(200);
+	Serial.printf("Configurado el serial1 del slave");
+	
+	#if IC2_SERIAL_BYPASS
+		ic2SetupSerialBypass();
+		
+	#endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
 	SHGAMEPADAXIS01.SetJoystick(&Joystick);
@@ -1369,7 +1490,10 @@ char loop_opt;
 char xactionc;
 unsigned long lastSerialActivity = 0;
 
-
+/****
+ * 
+ * MAIN LOOP
+*/
 void loop() {
 #if INCLUDE_WIFI
 	ECrowneWifi::loop();
@@ -1400,6 +1524,8 @@ void loop() {
 	UpdateGamepadState();
 #endif
 	shCustomProtocol.loop();
+	//delay(1000);
+	//Serial.printf("\nI'm alive\n");
 
 	// Wait for data
 	if (FlowSerialAvailable() > 0) {
@@ -1408,7 +1534,7 @@ void loop() {
 			lastSerialActivity = millis();
 			// Read command
 			loop_opt = FlowSerialTimedRead();
-
+			
 			switch(loop_opt) {
 				case '1': Command_Hello(); break;
 				case '8': Command_SetBaudrate(); break;
@@ -1450,3 +1576,4 @@ void loop() {
 		Command_Shutdown();
 	}
 }
+
