@@ -10,7 +10,8 @@ ESP8266 is cheaper and more powerful that most arduinos boards and fairly popula
 
 ## How To
 - Download this code
-- Install [VSCode](https://code.visualstudio.com/Download), [Git](https://git-scm.com/downloads), and [Platformio](https://platformio.org/platformio-ide)
+- Install Git
+- Install VSCode and Platformio
 - Open with VSCode
 - Adjust it however you need
 - Upload it to your device
