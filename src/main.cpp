@@ -16,7 +16,8 @@
 	#define IC2_MASTER 	true
 	#define IC2_SLAVE	false
 	#define IC2_ADDRESS 0x08
-	#include "I2CSerialBridge/I2CTransport.h"
+	#define IC2_SERIAL_BYPASS_DEBUG true
+	#include "I2CSerialBridge/I2CManager.h"
 
 	FullLoopbackStream outgoingStream;
 	
@@ -1014,7 +1015,7 @@ void idle(bool critical) {
 #endif
 #if IC2_SERIAL_BYPASS
 	yield();
-	IC2Transport::flush();
+	IC2TransportManager::flush();
 #endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
@@ -1248,7 +1249,7 @@ void setup()
 	ECrowneWifi::setup(&outgoingStream, &incomingStream);
 #endif
 #if IC2_SERIAL_BYPASS
-	IC2Transport::setup(&outgoingStream);
+	IC2TransportManager::setup(&outgoingStream);
 #endif
 	//#ifdef INCLUDE_TEMPGAUGE
 	//	shTEMPPIN.SetValue((int)80);
@@ -1424,12 +1425,6 @@ void setup()
 	arqserial.setIdleFunction(idle);
 	Serial.begin(115200);
 	delay(200);
-	Serial.printf("Configurado el serial1 del slave");
-	
-	#if IC2_SERIAL_BYPASS
-		ic2SetupSerialBypass();
-		
-	#endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
 	SHGAMEPADAXIS01.SetJoystick(&Joystick);
@@ -1516,7 +1511,7 @@ void loop() {
 #endif
 
 #if IC2_SERIAL_BYPASS
-	IC2Transport::loop();
+	IC2TransportManager::loop();
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
