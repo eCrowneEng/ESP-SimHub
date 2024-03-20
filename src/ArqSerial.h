@@ -4,9 +4,9 @@
 
 #ifndef StreamRead
 #define StreamRead Serial.read
-#define StreamFlush Serial1.flush
-#define StreamWrite Serial1.write
-#define StreamPrint Serial1.print
+#define StreamFlush Serial.flush
+#define StreamWrite Serial.write
+#define StreamPrint Serial.print
 #define StreamAvailable Serial.available
 #endif
 
@@ -173,30 +173,30 @@ public:
 		Serial.printf("\nCustomPacketStart[start,packetType,length]: [0x09,%d,%d]",packetType,length);
 	}
 
-	void I2CustomPacketStart(byte packetType, uint8_t length) {
-		Wire.write(0x09);
-		Wire.write(packetType);
-		Wire.write(length);
-		Serial.printf("\nI2CustomPacketStart[start,packetType,length]: [0x09,%d,%d]",packetType,length);
-	}
+	// void I2CustomPacketStart(byte packetType, uint8_t length) {
+	// 	Wire.write(0x09);
+	// 	Wire.write(packetType);
+	// 	Wire.write(length);
+	// 	Serial.printf("\nI2CustomPacketStart[start,packetType,length]: [0x09,%d,%d]",packetType,length);
+	// }
 
 	void CustomPacketSendByte(byte data) {
 		StreamWrite(data);
 		Serial.printf("\nCustomPacketSendByte[data]: [%d]",data);
 	}
 
-	void I2CustomPacketSendByte(byte data) {
-		Wire.write(data);
-		Serial.printf("\nI2CustomPacketSendByte[data]: [%d]",data);
-	}
+	// void I2CustomPacketSendByte(byte data) {
+	// 	Wire.write(data);
+	// 	Serial.printf("\nI2CustomPacketSendByte[data]: [%d]",data);
+	// }
 
 
 	void CustomPacketEnd() {
 		//Serial.write(0x00);
 	}
-	void I2CustomPacketEnd() {
-		//Serial.write(0x00);
-	}
+	// void I2CustomPacketEnd() {
+	// 	//Serial.write(0x00);
+	// }
 
 	int read() {
 		unsigned long fsr_startMillis = millis();

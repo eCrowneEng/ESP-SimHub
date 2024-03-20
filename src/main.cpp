@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
-#include <Wire.h>
+
 
 // No longer have to define whether it's an ESP32 or ESP8266, just do an initial compilation and
 //  VSCode will pick  up the right environment from platformio.ini
@@ -12,10 +12,14 @@
 #define IC2_SERIAL_BYPASS true
 
 #if IC2_SERIAL_BYPASS
-	#define WIRE Wire 
+	#define WIRE Wire
 	#define IC2_MASTER 	true
 	#define IC2_SLAVE	false
 	#define IC2_ADDRESS 0x08
+	#include "I2CSerialBridge/I2CTransport.h"
+
+	FullLoopbackStream outgoingStream;
+	
 #endif
 
 #if INCLUDE_WIFI
@@ -115,6 +119,9 @@ FullLoopbackStream incomingStream;
 #include "setPwmFrequency.h"
 #include "SHDebouncer.h"
 #include "SHButton.h"
+
+
+
 
 // ----------------------------------------------------- HW SETTINGS, PLEASE REVIEW ALL -------------------------------------------
 
@@ -1005,6 +1012,10 @@ void idle(bool critical) {
 	yield();
 	ECrowneWifi::flush();
 #endif
+#if IC2_SERIAL_BYPASS
+	yield();
+	IC2Transport::flush();
+#endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
 	SHGAMEPADAXIS01.read();
@@ -1092,7 +1103,7 @@ void EncoderPositionChanged(int encoderId, int position, byte direction) {
 #endif
 }
 #endif
-uint8_t endWireTransmission(bool stop){
+/*uint8_t endWireTransmission(bool stop){
 	uint8_t error=Wire.endTransmission(stop);
 	if(error=0){
 		Serial.printf("\n Correct wire close \n");
@@ -1114,26 +1125,25 @@ uint8_t endWireTransmission(bool stop){
 	}
 	Serial.flush();
 	return error;
-
-}
+*/
 void buttonStatusChanged(int buttonId, byte Status) {
 #ifdef INCLUDE_GAMEPAD
 	Joystick.setButton(TM1638_ENABLEDMODULES * 8 + buttonId - 1, Status);
 	Joystick.sendState();
 #else
-	#if IC2_SERIAL_BYPASS
-		Wire.beginTransmission(0x08); /* begin with device address 8 */
-		arqserial.I2CustomPacketStart(0x03,2);
-		arqserial.I2CustomPacketSendByte(buttonId);
-		arqserial.I2CustomPacketSendByte(Status);
-		arqserial.I2CustomPacketEnd();
-		endWireTransmission(true);
-	#else
+	// #if IC2_SERIAL_BYPASS
+	// 	Wire.beginTransmission(0x08); /* begin with device address 8 */
+	// 	arqserial.I2CustomPacketStart(0x03,2);
+	// 	arqserial.I2CustomPacketSendByte(buttonId);
+	// 	arqserial.I2CustomPacketSendByte(Status);
+	// 	arqserial.I2CustomPacketEnd();
+	// 	endWireTransmission(true);
+	// #else
 		arqserial.CustomPacketStart(0x03,2);
 		arqserial.CustomPacketSendByte(buttonId);
 		arqserial.CustomPacketSendByte(Status);
 		arqserial.CustomPacketEnd();
-	#endif    
+//	#endif    
 
 #endif
 }
@@ -1153,69 +1163,73 @@ void buttonMatrixStatusChanged(int buttonId, byte Status) {
 #endif
 
 
-void resendToSerialFromMasterDevice(size_t howManyChars){
-	// FlowSerialDebugPrintLn("Received data");
- //int recvBytes=0;
-
-// int buttonId=-1;
- //byte buttonStatus=0;
-
- while (0 <Wire.available()) {
-    char c = Wire.read();      /* receive byte as a character */
-	// if(recvBytes==3){
-	// 	buttonId=c;
-	// }
-	// if(recvBytes==4){
-	// 	buttonStatus=c;
-	// }
-	// recvBytes++;
-   // Serial.write(c);
-   //	 Serial.flush();
- //   Serial.print(c);           /* print the character */
-	FlowSerialWrite(c);
-  }
-	// buttonStatusChanged(buttonId,buttonStatus);
- //Serial.println();             /* to newline */
-}
+// #if IC2_SERIAL_BYPASS
 
 
-bool isSlaveAvailable(){
-	Wire.beginTransmission(IC2_ADDRESS);
-    uint8_t error = endWireTransmission(true);
+// void resendToSerialFromMasterDevice(size_t howManyChars){
+// 	// FlowSerialDebugPrintLn("Received data");
+//  //int recvBytes=0;
 
-	if(error==0){
-		Serial.printf("\n Slave device detected at address 8\n");
-		return true;
-	}
-	return false;
-}
+// // int buttonId=-1;
+//  //byte buttonStatus=0;
 
-/** SETUP SERIAL BYPASS IC2 MASTER, USE WHEN THIS DEVICE COMMAND THE SENDING WORKFLOW*/
-void ic2SetupMaster(){
-	WIRE.begin();
-	while(!isSlaveAvailable()){
-			Serial.printf("\n Slave device not available, retrying 1 sec later");
-			delay(1000);
-	};
-}
+//  while (0 <Wire.available()) {
+//     char c = Wire.read();      /* receive byte as a character */
+// 	// if(recvBytes==3){
+// 	// 	buttonId=c;
+// 	// }
+// 	// if(recvBytes==4){
+// 	// 	buttonStatus=c;
+// 	// }
+// 	// recvBytes++;
+//    // Serial.write(c);
+//    //	 Serial.flush();
+//  //   Serial.print(c);           /* print the character */
+// 	FlowSerialWrite(c);
+//   }
+// 	// buttonStatusChanged(buttonId,buttonStatus);
+//  //Serial.println();             /* to newline */
+// }
 
-/** SETUP SERIAL BYPASS IC2 SLAVE, USE WHEN THIS DEVICE IS CONNECTED TO SIMHUB*/
-void ic2SetupSlave(){
-	Wire.begin(IC2_ADDRESS);
-	Wire.onReceive(resendToSerialFromMasterDevice); /* register receive event */
-}
+
+// bool isSlaveAvailable(){
+// 	Wire.beginTransmission(IC2_ADDRESS);
+//     uint8_t error = endWireTransmission(true);
+
+// 	if(error==0){
+// 		Serial.printf("\n Slave device detected at address 8\n");
+// 		return true;
+// 	}
+// 	return false;
+// }
+
+// /** SETUP SERIAL BYPASS IC2 MASTER, USE WHEN THIS DEVICE COMMAND THE SENDING WORKFLOW*/
+// void ic2SetupMaster(){
+// 	WIRE.begin();
+// 	while(!isSlaveAvailable()){
+// 			Serial.printf("\n Slave device not available, retrying 1 sec later");
+// 			delay(1000);
+// 	};
+// }
+
+// /** SETUP SERIAL BYPASS IC2 SLAVE, USE WHEN THIS DEVICE IS CONNECTED TO SIMHUB*/
+// void ic2SetupSlave(){
+// 	Wire.begin(IC2_ADDRESS);
+// 	Wire.onReceive(resendToSerialFromMasterDevice); /* register receive event */
+// }
 
 
-void ic2SetupSerialBypass(){
- #if IC2_MASTER
-	ic2SetupMaster();
- #endif
- #if IC2_SLAVE
-	ic2SetupSlave();
- #endif
+// void ic2SetupSerialBypass(){
+//  #if IC2_MASTER
+// 	ic2SetupMaster();
+//  #endif
+//  #if IC2_SLAVE
+// 	ic2SetupSlave();
+//  #endif
 
-}
+// }
 
+// #endif
 
 
 /*****
@@ -1233,7 +1247,9 @@ void setup()
 #if INCLUDE_WIFI
 	ECrowneWifi::setup(&outgoingStream, &incomingStream);
 #endif
-
+#if IC2_SERIAL_BYPASS
+	IC2Transport::setup(&outgoingStream);
+#endif
 	//#ifdef INCLUDE_TEMPGAUGE
 	//	shTEMPPIN.SetValue((int)80);
 	//#endif
@@ -1497,6 +1513,10 @@ unsigned long lastSerialActivity = 0;
 void loop() {
 #if INCLUDE_WIFI
 	ECrowneWifi::loop();
+#endif
+
+#if IC2_SERIAL_BYPASS
+	IC2Transport::loop();
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
