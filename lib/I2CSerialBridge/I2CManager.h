@@ -56,11 +56,11 @@ class IC2TransportManager  {
 /** SETUP SERIAL BYPASS IC2 SLAVE, USE WHEN THIS DEVICE IS CONNECTED TO SIMHUB*/
 #define FlowSerialBegin [](unsigned long baud) { Serial.printf("Hola mundo");}
 #endif
-#if IC_SLAVE
-#define StreamRead Serial.read
-#define StreamFlush Serial.flush
-#define StreamWrite Serial.write
-#define StreamPrint Serial.print
-#define StreamAvailable Serial.available
-#define FlowSerialBegin [](unsigned long baud) { Serial.begin(baud);}
-#endif
+// #if IC_SLAVE
+// #define StreamRead Serial.read
+// #define StreamFlush Serial.flush
+// #define StreamWrite Serial.write
+// #define StreamPrint Serial.print
+// #define StreamAvailable Serial.available
+// #define FlowSerialBegin [](unsigned long baud) { Serial.begin(baud);}
+// #endif
