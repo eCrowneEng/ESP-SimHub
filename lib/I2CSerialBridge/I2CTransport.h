@@ -22,9 +22,9 @@
 //     ic2SetupSlave();
 // #endif
 
-class IC2Transport {
+class I2CTransport {
 	public:
-	IC2Transport(){}
+	I2CTransport(){}
 	virtual void loop() = 0 ;
 	virtual void flush() = 0;
 	virtual void setup(Stream *) = 0;

@@ -3,13 +3,17 @@
 #include "I2CTransport.h"
 #include "I2CSerialBridge.h"
 
+#ifndef WIRE
+#error WIRE must be settled to have a correct custom wire config in your MASTER config.
+#endif
+
 #if IC2_MASTER
 I2CSerialBridge instance(IC2_ADDRESS);
 
-class IC2TransportMaster : public IC2Transport {
+class I2CTransportMaster : public I2CTransport {
     public:
 
-    IC2TransportMaster(){}
+    I2CTransportMaster(){}
 	 void setup(Stream *outgoingStream){
 		ic2SetupSerialBypass();
 		instance.setup((FullLoopbackStream*) outgoingStream);

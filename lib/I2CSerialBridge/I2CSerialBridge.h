@@ -1,6 +1,11 @@
 
 #include <FullLoopbackStream.h>
 #include <Wire.h>
+
+#ifndef WIRE
+#error WIRE must be settled to have a correct custom wire config in your MASTER config.
+#endif
+
 class I2CSerialBridge{
       FullLoopbackStream *outgoingStream;
       uint8_t address;

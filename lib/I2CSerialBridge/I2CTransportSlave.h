@@ -2,12 +2,11 @@
 #include <Wire.h>
 #include "I2CTransport.h"
 
+#ifndef WIRE
+#error WIRE must be settled to have a correct custom wire config in your SLAVE config.
+#endif
 
-
-
-
-
-class IC2TransportSlave : public IC2Transport {
+class I2CTransportSlave : public I2CTransport {
 	static Stream *outgoingStream;
     public:
 	 void setup(Stream *outgoingStream){

@@ -1,14 +1,14 @@
 #pragma once
-#include "IC2TransportMaster.h"
-#include "I2CSeriaBypass.h"
+#include "I2CTransportMaster.h"
+#include "I2CTransportSlave.h"
 
 /***
  * "This Manager is responsible for configuring the behavior based on the master-slave role for I2C communication."
 */
 class IC2TransportManager  {
     public:
-       static IC2TransportMaster tm;
-       static IC2TransportSlave ts;
+       static I2CTransportMaster tm;
+       static I2CTransportSlave ts;
 
     static void setup(FullLoopbackStream *outgoingStream){
         #if IC2_MASTER
