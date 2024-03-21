@@ -27,5 +27,5 @@ class IC2Transport {
 	IC2Transport(){}
 	virtual void loop() = 0 ;
 	virtual void flush() = 0;
-	virtual void setup(FullLoopbackStream *) = 0;
+	virtual void setup(Stream *) = 0;
 };

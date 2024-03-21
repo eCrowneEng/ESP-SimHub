@@ -8,8 +8,10 @@
 
 
 class IC2TransportSlave : public IC2Transport {
+	static Stream *outgoingStream;
     public:
-	 void setup(FullLoopbackStream *outgoingStream){
+	 void setup(Stream *outgoingStream){
+		this->outgoingStream=outgoingStream;
 		ic2SetupSlave();
 	}
 
@@ -23,7 +25,7 @@ class IC2TransportSlave : public IC2Transport {
      static void resendToSerialFromDevice(size_t howManyChars){
  		while (0 <Wire.available()) {
     		char c = WIRE.read();      /* receive byte as a character */
-			Serial.write(c);
+			outgoingStream->write(c);
 			}
 	};
 

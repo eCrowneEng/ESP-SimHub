@@ -10,9 +10,9 @@ class IC2TransportMaster : public IC2Transport {
     public:
 
     IC2TransportMaster(){}
-	 void setup(FullLoopbackStream *outgoingStream){
+	 void setup(Stream *outgoingStream){
 		ic2SetupSerialBypass();
-		instance.setup(outgoingStream);
+		instance.setup((FullLoopbackStream*) outgoingStream);
 	}
 	 void loop() {
 		instance.loop();
