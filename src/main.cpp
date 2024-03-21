@@ -17,7 +17,7 @@
 	#define IC2_SLAVE	false
 	#define IC2_ADDRESS 0x08
 	#define IC2_SERIAL_BYPASS_DEBUG true
-	#include "I2CSerialBridge/I2CManager.h"
+	#include <I2CManager.h>
 
 	FullLoopbackStream outgoingStream;
 	
