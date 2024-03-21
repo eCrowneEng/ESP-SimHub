@@ -27,6 +27,7 @@ public:
 #endif
     }
 
+    // duty is 0-1023
     void pwm(char pin, unsigned int duty) __attribute__((always_inline))
     {
 #ifdef ESP32
@@ -41,9 +42,9 @@ public:
                 throw std::out_of_range("too many pwm channels");
             }
             ledcSetup(newChannel, frequency, 10);
+            ledcAttachPin(pin, newChannel);
             existingChannel = newChannel;
         }
-        // 10 bits resolution
         ledcWrite(existingChannel, duty);
 #endif
 #ifdef ESP8266
