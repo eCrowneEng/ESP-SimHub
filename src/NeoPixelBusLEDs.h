@@ -16,6 +16,16 @@
 #define RIGHTTOLEFT 0
 #define TEST_MODE 1
 
+// LED BRIGHTNESS NANNY
+//  Think about why you want to go higher than this?
+//  is your power supply ready? are your eyes ready?, is your heat dissipation ready?
+//  https://learn.adafruit.com/sipping-power-with-neopixels/insights
+//  remember, if you don't have an external power supply, your board or USB may not be able
+//  to provide enough power.
+// luminance goes from 0-255, UPDATE AT YOUR OWN RISK
+#define LUMINANCE_LIMIT 150
+
+
 // The color order that your LED strip uses
 // https://github.com/Makuna/NeoPixelBus/wiki/Neo-Features
 #define colorSpec NeoGrbFeature // A three-element color in the order of Green, Red, and then Blue. This is used for SK6812(grb), WS2811, and WS2812.
@@ -113,6 +123,8 @@
 //  more than your device can provide, which can damage it. Start with lower numbers 
 //  ex: (50, 0, 0) is red and (100, 0, 0) is still red, just brighter
 //  See this: https://learn.adafruit.com/adafruit-neopixel-uberguide/powering-neopixels#estimating-power-requirements-2894486
+//
+// note: that this color is not limited by the luminance limit
 auto initialColor = RgbColor(120, 0, 0);
 
 
@@ -146,14 +158,13 @@ if (std::string(className).find(prefix) == 0) {
 
     if (TEST_MODE)
     {
-        neoLedStrip.SetLuminance(155);
         for (int i = 0; i < LED_COUNT; i++)
         {
             neoLedStrip.SetPixelColor(i, initialColor);
         }
         neoLedStrip.Show();
     }
-    neoLedStrip.SetLuminance(255);
+    neoLedStrip.SetLuminance(LUMINANCE_LIMIT);
 }
 
 void neoPixelBusRead()
