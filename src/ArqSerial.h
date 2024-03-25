@@ -39,6 +39,7 @@ private:
 		do {
 			if (idleFunction != 0) idleFunction(true);
 			c = StreamRead();
+			
 			if (c >= 0) {
 #ifdef TESTFAIL
 				testfailidx = (testfailidx + 1) % 5000;
@@ -61,6 +62,7 @@ private:
 		while (StreamAvailable() > 0) {
 			header = Arq_TimedRead();
 			//DebugPrintLn("hello1");
+			
 			currentCrc = 0;
 
 			if (header == 0x01) {
@@ -146,6 +148,7 @@ private:
 		StreamWrite(0x03);
 		StreamWrite(packetId);
 		StreamFlush();
+		Serial.printf("\nSendAcq[start,packetId]: [0x03,%d,%d]",packetId);
 	}
 
 	void SendNAcq(uint8_t lastKnownValidPacket, byte reason)
@@ -154,6 +157,7 @@ private:
 		StreamWrite(lastKnownValidPacket);
 		StreamWrite(reason);
 		StreamFlush();
+		Serial.printf("\nSendNAcq[start,lastKnownValidPacket,reason]: [0x04,%d,%d]",lastKnownValidPacket,reason);
 	}
 
 public:
@@ -166,15 +170,33 @@ public:
 		StreamWrite(0x09);
 		StreamWrite(packetType);
 		StreamWrite(length);
+		Serial.printf("\nCustomPacketStart[start,packetType,length]: [0x09,%d,%d]",packetType,length);
 	}
+
+	// void I2CustomPacketStart(byte packetType, uint8_t length) {
+	// 	Wire.write(0x09);
+	// 	Wire.write(packetType);
+	// 	Wire.write(length);
+	// 	Serial.printf("\nI2CustomPacketStart[start,packetType,length]: [0x09,%d,%d]",packetType,length);
+	// }
 
 	void CustomPacketSendByte(byte data) {
 		StreamWrite(data);
+		Serial.printf("\nCustomPacketSendByte[data]: [%d]",data);
 	}
+
+	// void I2CustomPacketSendByte(byte data) {
+	// 	Wire.write(data);
+	// 	Serial.printf("\nI2CustomPacketSendByte[data]: [%d]",data);
+	// }
+
 
 	void CustomPacketEnd() {
 		//Serial.write(0x00);
 	}
+	// void I2CustomPacketEnd() {
+	// 	//Serial.write(0x00);
+	// }
 
 	int read() {
 		unsigned long fsr_startMillis = millis();
@@ -184,6 +206,7 @@ public:
 			if (DataBuffer.size() > 0) {
 				uint8_t res = 0;
 				DataBuffer.pop(res);
+				Serial1.printf("\nread[data]: [%d]",res);
 				return (int)res;
 			}
 
@@ -195,8 +218,10 @@ public:
 	}
 
 	int Available() {
+		//Serial1.printf("\nChecking Available darta\n");
 		if (idleFunction != 0) idleFunction(false);
 		if (DataBuffer.size() == 0) {
+			
 			ProcessIncomingData();
 		}
 		return DataBuffer.size();
@@ -206,6 +231,7 @@ public:
 		StreamWrite(0x08);
 		StreamWrite(data);
 		StreamFlush();
+		Serial1.printf("\nWrite[start,data]: [0x08,%d]",data);
 	}
 
 	void Print(char data)
