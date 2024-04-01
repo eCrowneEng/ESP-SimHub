@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "SHShakeitBase.h"
+#include <EspSimHubPwm.h>
 
 class SHShakeitPWM : public SHShakeitBase {
 private:
@@ -10,7 +11,11 @@ private:
 	byte pins[4];
 	byte mins[4];
 	byte maxs[4];
-	byte 	enabledOutputs;
+	byte enabledOutputs;
+	int expectedFrequencyHz = 490;
+#ifdef ESP32
+	ledc_components* outputs;
+#endif
 public:
 	uint8_t motorCount() {
 		return enabledOutputs;
@@ -26,9 +31,22 @@ public:
 		pins[2] = pPin03;
 		pins[3] = pPin04;
 		enabledOutputs = pEnabledOutputs;
+		
+		#ifdef ESP32
+		ledc_components* components = new ledc_components[pEnabledOutputs];
+		for (int i = 0; i < pEnabledOutputs; i++) {
+			components[i].pin = pins[i];
+		}
+		createPwmForDutyCycleControl(components, enabledOutputs, expectedFrequencyHz, 10);
+		outputs = components;
+		#endif
+		#ifdef ESP8266
+		analogWriteFreq(expectedFrequencyHz);
 		for (int i = 0; i < pEnabledOutputs; i++) {
 			pinMode(pins[i], OUTPUT);
+			analogWrite(pins[i], 0);
 		}
+		#endif
 	}
 
 	void setMin(byte pMin01, byte pMin02, byte	pMin03, byte pMin04) {
@@ -54,8 +72,23 @@ protected:
 		else {
 			value2 = (value2) / 255.0 * (double)maxs[motorIdx];
 		}
-
+		#ifdef ESP8266
 		analogWrite(pins[motorIdx], (int)value2);
+		#endif
+		#ifdef ESP32
+		ledc_components components = outputs[motorIdx];
+		ledc_mode_t speedMode = components.channel.speed_mode;
+		ledc_channel_t channel = components.channel.channel;
+		ledc_set_duty(
+			speedMode, 
+			channel,
+			value2
+		);
+		ledc_update_duty(
+			speedMode, 
+			channel
+		);
+		#endif
 	}
 };
 

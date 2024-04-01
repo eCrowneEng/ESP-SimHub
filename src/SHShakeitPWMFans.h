@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "SHShakeitBase.h"
-#include <TimerOne.h>
+#include <EspSimHubPwm.h>
 
 class SHShakeitPWMFans : public SHShakeitBase {
 private:
@@ -16,6 +16,9 @@ private:
 	unsigned long offDelay[4] = { 2000,2000,2000,2000 };
 	byte reverseRelayLogic[4] = { 0,0,0,0 };
 	byte enabledOutputs;
+#ifdef ESP32
+	ledc_components* outputs;
+#endif
 public:
 	uint8_t motorCount() {
 		return enabledOutputs;
@@ -36,16 +39,29 @@ public:
 	}
 
 	void begin(byte pEnabledOutputs, byte pPin01, byte pPin02, byte	pPin03, byte pPin04) {
-		Timer1.initialize(40);
-
 		pins[0] = pPin01;
 		pins[1] = pPin02;
 		pins[2] = pPin03;
 		pins[3] = pPin04;
+
 		enabledOutputs = pEnabledOutputs;
+		#ifdef ESP32
+		ledc_components* components = new ledc_components[pEnabledOutputs];
 		for (int i = 0; i < pEnabledOutputs; i++) {
-			Timer1.pwm(pins[i], 0);
+			components[i].pin = pins[i];
 		}
+		createPwmForDutyCycleControl(components, enabledOutputs, 25000, 10);
+		outputs = components;
+		#endif
+		#ifdef ESP8266
+		for (int i = 0; i < pEnabledOutputs; i++) {
+			pinMode(pins[i], OUTPUT);
+			analogWrite(pins[i], 0);
+		}
+		analogWriteFreq(25000); // 25khz
+        // set duty cycle range from 0 to 1023, per requirement of simhub params (10 bit)
+        analogWriteRange(1023);
+		#endif
 	}
 
 	void setMin(byte pMin01, byte pMin02, byte	pMin03, byte pMin04) {
@@ -113,8 +129,24 @@ protected:
 		else {
 			value2 = (value2) / 255.0 * (double)maxs[motorIdx];
 		}
-
-		Timer1.pwm(pins[motorIdx], (int)(((float)value2 / 255.0) * 1023.0));
+		uint32_t duty = (value2 / 255.0) * 1023.0;
+		#ifdef ESP8266
+		analogWrite(pins[motorIdx], (int)(((float)value2 / 255.0) * 1023.0));
+		#endif
+		#ifdef ESP32
+		ledc_components components = outputs[motorIdx];
+		ledc_mode_t speedMode = components.channel.speed_mode;
+		ledc_channel_t channel = components.channel.channel;
+		ledc_set_duty(
+			speedMode, 
+			channel,
+			duty
+		);
+		ledc_update_duty(
+			speedMode, 
+			channel
+		);
+		#endif
 
 		if (relays[motorIdx] > 0) {
 			if (value2 > 0) {
