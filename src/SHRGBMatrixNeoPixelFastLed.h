@@ -14,8 +14,8 @@ CRGB SHRGBMatrixNeoPixelFastLeds_leds[64];
 class SHRGBMatrixNeoPixelFastLed : public SHRGBLedsBase {
 private:
 	unsigned long lastRead = 0;
-	bool zigzag;
-	bool reverseZigzag;
+	bool zigzag = false;
+	bool reverseZigzag = false;
 public:
 
 	void begin(int maxLeds, int righttoleft, bool zigZag, bool reverseZigZag, bool testMode) {

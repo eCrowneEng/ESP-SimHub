@@ -33,7 +33,7 @@ FullLoopbackStream incomingStream;
 //  
 //#define INCLUDE_RGB_LEDS_NEOPIXELBUS        // use this instead of INCLUDE_WS2812B
 //#define INCLUDE_WS2812B                     // consider using INCLUDE_RGB_LEDS_NEOPIXELBUS {"Name":"INCLUDE_WS2812B","Type":"autodefine","Condition":"[WS2812B_RGBLEDCOUNT]>0"}
-//#define INCLUDE_WS2812B_MATRIX              // consider using INCLUDE_WS2812B_MATRIX		 {"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
+//#define INCLUDE_WS2812B_MATRIX              //{"Name":"INCLUDE_WS2812B_MATRIX","Type":"autodefine","Condition":"[WS2812B_MATRIX_ENABLED]>0"}
 //#define INCLUDE_BUTTONS                     //{"Name":"INCLUDE_BUTTONS","Type":"autodefine","Condition":"[ENABLED_BUTTONS_COUNT]>0","IsInput":true}
 //#define INCLUDE_BUTTONMATRIX                //{"Name":"INCLUDE_BUTTONMATRIX","Type":"autodefine","Condition":"[ENABLED_BUTTONMATRIX]>0","IsInput":true}
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
@@ -43,6 +43,13 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_MAX7221MATRIX               //{"Name":"INCLUDE_MAX7221MATRIX","Type":"autodefine","Condition":"[MAX7221_MATRIX_ENABLED]>0"}
 //#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
 //#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
+//#define INCLUDE_SHAKEITPWM                  //{"Name":"INCLUDE_SHAKEITPWM","Type":"autodefine","Condition":"[SHAKEITPWM_ENABLED_MOTORS]>0"}
+//#define INCLUDE_TACHOMETER                  //{"Name":"INCLUDE_TACHOMETER ","Type":"autodefine","Condition":"[ENABLE_TACHOMETER]>0"}
+//#define INCLUDE_SPEEDOGAUGE                 //{"Name":"INCLUDE_SPEEDOGAUGE","Type":"autodefine","Condition":"[ENABLE_SPEEDOGAUGE]>0"}
+//#define INCLUDE_BOOSTGAUGE                  //{"Name":"INCLUDE_BOOSTGAUGE ","Type":"autodefine","Condition":"[ENABLE_BOOSTGAUGE]>0"}
+//#define INCLUDE_FUELGAUGE                   //{"Name":"INCLUDE_FUELGAUGE ","Type":"autodefine","Condition":"[ENABLE_FUELGAUGE]>0"}
+//#define INCLUDE_TEMPGAUGE                   //{"Name":"INCLUDE_TEMPGAUGE ","Type":"autodefine","Condition":"[ENABLE_TEMPGAUGE]>0"}
+//#define INCLUDE_CONSGAUGE                   //{"Name":"INCLUDE_CONSGAUGE ","Type":"autodefine","Condition":"[ENABLE_CONSGAUGE]>0"}
 
 // Untested features, please open a GitHub Issue, or post in the discord if you try them
 //
@@ -54,18 +61,11 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_HT16K33_SINGLECOLORMATRIX   //{"Name":"INCLUDE_HT16K33_SINGLECOLORMATRIX","Type":"autodefine","Condition":"[ENABLE_ADA_HT16K33_SingleColorMatrix]>0"}
 //#define INCLUDE_74HC595_GEAR_DISPLAY        //{"Name":"INCLUDE_74HC595_GEAR_DISPLAY","Type":"autodefine","Condition":"[ENABLE_74HC595_GEAR_DISPLAY]>0"}
 //#define INCLUDE_6c595_GEAR_DISPLAY          //{"Name":"INCLUDE_6c595_GEAR_DISPLAY ","Type":"autodefine","Condition":"[ENABLE_6C595_GEAR_DISPLAY]>0"}
-//#define INCLUDE_TACHOMETER                  //{"Name":"INCLUDE_TACHOMETER ","Type":"autodefine","Condition":"[ENABLE_TACHOMETER]>0"}
-//#define INCLUDE_BOOSTGAUGE                  //{"Name":"INCLUDE_BOOSTGAUGE ","Type":"autodefine","Condition":"[ENABLE_BOOSTGAUGE]>0"}
-//#define INCLUDE_SPEEDOGAUGE                 //{"Name":"INCLUDE_SPEEDOGAUGE","Type":"autodefine","Condition":"[ENABLE_SPEEDOGAUGE]>0"}
-//#define INCLUDE_FUELGAUGE                   //{"Name":"INCLUDE_FUELGAUGE ","Type":"autodefine","Condition":"[ENABLE_FUELGAUGE]>0"}
-//#define INCLUDE_TEMPGAUGE                   //{"Name":"INCLUDE_TEMPGAUGE ","Type":"autodefine","Condition":"[ENABLE_TEMPGAUGE]>0"}
-//#define INCLUDE_CONSGAUGE                   //{"Name":"INCLUDE_CONSGAUGE ","Type":"autodefine","Condition":"[ENABLE_CONSGAUGE]>0"}
 //#define INCLUDE_SHAKEITADASHIELD            //{"Name":"INCLUDE_SHAKEITADASHIELD ","Type":"autodefine","Condition":"[ADAMOTORS_SHIELDSCOUNT]>0"}
 //#define INCLUDE_SHAKEITDKSHIELD             //{"Name":"INCLUDE_SHAKEITDKSHIELD ","Type":"autodefine","Condition":"[DKMOTOR_SHIELDSCOUNT]>0"}
 //#define INCLUDE_SHAKEITL298N                //{"Name":"INCLUDE_SHAKEITL298N","Type":"autodefine","Condition":"[L98NMOTORS_ENABLED]>0"}
 //#define INCLUDE_SHAKEITMOTOMONSTER          //{"Name":"INCLUDE_SHAKEITMOTOMONSTER","Type":"autodefine","Condition":"[MOTOMONSTER_ENABLED]>0"}
 //#define INCLUDE_SHAKEIDUALVNH5019           //{"Name":"INCLUDE_SHAKEIDUALVNH5019","Type":"autodefine","Condition":"[DUALVNH5019_ENABLED]>0"}
-//#define INCLUDE_SHAKEITPWM                  //{"Name":"INCLUDE_SHAKEITPWM","Type":"autodefine","Condition":"[SHAKEITPWM_ENABLED_MOTORS]>0"}
 //#define INCLUDE_ENCODERS                    //{"Name":"INCLUDE_ENCODERS","Type":"autodefine","Condition":"[ENABLED_ENCODERS_COUNT]>0","IsInput":true}
 //#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
@@ -243,7 +243,7 @@ SHMatrixMAX7219 shMatrixMAX7219;
 // --------------------------------------------------------------------------------------------------------
 // 0 disabled, 1 enabled
 #define ENABLE_ADA_HT16K33_SingleColorMatrix 0     //{"Group":"HT16K33 Single Color Matrix","Name":"ENABLE_ADA_HT16K33_SingleColorMatrix","Title":"Adafruit HT16K33 single color matrix display enabled","DefaultValue":"0","Type":"bool","Pins":"328:18,HT16K33 SC MATRIX DAT;19,HT16K33 SC MATRIX CLK|micro:2,HT16K33 SC MATRIX DAT;3,HT16K33 SC MATRIX CLK|mega:20,HT16K33 SC MATRIX DAT;21,HT16K33 SC MATRIX CLK"}
-// I2C Adress
+// I2C Address
 #ifdef INCLUDE_HT16K33_SINGLECOLORMATRIX
 #include "SHMatrixHT16H33SingleColor.h"
 #define ADA_HT16K33_SINGLECOLORMATRIX_I2CADDRESS 0x70 //{"Name":"ADA_HT16K33_SINGLECOLORMATRIX_I2CADDRESS","Title":"Adafruit HT16K33 single color matrix matrix I2C address","DefaultValue":"0x70","Type":"hex","Condition":"ENABLE_ADA_HT16K33_SingleColorMatrix>0"}
@@ -290,12 +290,11 @@ Adafruit_NeoPixel WS2812B_strip = Adafruit_NeoPixel(WS2812B_RGBLEDCOUNT, WS2812B
 // WS2812b MATRIX ---------------------------------------------------------------------------------------
 // http://www.dx.com/p/8-bit-ws2812-5050-rgb-led-development-board-w-built-in-full-color-drive-387667
 // -------------------------------------------------------------------------------------------------------
+#ifdef INCLUDE_WS2812B_MATRIX
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
-#define WS2812B_MATRIX_ENABLED 0                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
-
-#ifdef INCLUDE_WS2812B_MATRIX
-#define WS2812B_MATRIX_DATAPIN 6                 //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#define WS2812B_MATRIX_ENABLED 1                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
+#define WS2812B_MATRIX_DATAPIN 10                //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
 #define WS2812B_MATRIX_SERPENTINELAYOUT 0        //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
 #define WS2812B_MATRIX_SERPENTINELAYOUTREVERSE 0 //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUTREVERSE","Title":"Reverse serpentine layout start direction","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0 && WS2812B_MATRIX_SERPENTINELAYOUT>0"}
 
@@ -444,8 +443,8 @@ byte ADA_HT16K33_Matrix_luminosity = 0;
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_TACHOMETER
 #include "SHTonePin.h"
-#define ENABLE_TACHOMETER 0 //{"Group":"Tachometer","Name":"ENABLE_TACHOMETER","Title":"After market tachometer enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
-#define TACHOMETER_PIN 9    //{"Name":"TACHOMETER_PIN","Title":"Tachometer signal pin","DefaultValue":"9","Type":"pin;Tachometer signal","Condition":"ENABLE_TACHOMETER > 0 "}
+#define ENABLE_TACHOMETER 1 //{"Group":"Tachometer","Name":"ENABLE_TACHOMETER","Title":"After market tachometer enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
+#define TACHOMETER_PIN 8    //{"Name":"TACHOMETER_PIN","Title":"Tachometer signal pin","DefaultValue":"9","Type":"pin;Tachometer signal","Condition":"ENABLE_TACHOMETER > 0 "}
 SHTonePin rpmTonePin;
 #endif
 
@@ -454,8 +453,8 @@ SHTonePin rpmTonePin;
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_SPEEDOGAUGE
 #include "SHTonePin.h"
-#define ENABLE_SPEEDOGAUGE 0 //{"Group":"Speedometer","Name":"ENABLE_SPEEDOGAUGE","Title":"After market Speedo gauge enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
-#define SPEEDO_PIN 4         //{"Name":"SPEEDO_PIN","Title":"Speedometer signal pin","DefaultValue":"4","Type":"pin;Speedometer signal","Template":"","Condition":"ENABLE_SPEEDOGAUGE >0"}
+#define ENABLE_SPEEDOGAUGE 1 //{"Group":"Speedometer","Name":"ENABLE_SPEEDOGAUGE","Title":"After market Speedo gauge enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
+#define SPEEDO_PIN 8         //{"Name":"SPEEDO_PIN","Title":"Speedometer signal pin","DefaultValue":"4","Type":"pin;Speedometer signal","Template":"","Condition":"ENABLE_SPEEDOGAUGE >0"}
 SHTonePin speedoTonePin;
 #endif
 
@@ -463,40 +462,40 @@ SHTonePin speedoTonePin;
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-After-Market-Boost-Gauge
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_BOOSTGAUGE
-#define ENABLE_BOOSTGAUGE 0 //{"Group":"Boost Gauge","Name":"ENABLE_BOOSTGAUGE","Title":"After market boost gauge enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
-#define BOOST_PIN 5         //{"Name":"BOOST_PIN","Title":"Boost pwm pin","DefaultValue":"5","Type":"pin;Boost signal","Condition":"ENABLE_BOOSTGAUGE >0"}
+#define ENABLE_BOOSTGAUGE 1 //{"Group":"Boost Gauge","Name":"ENABLE_BOOSTGAUGE","Title":"After market boost gauge enabled\r\nSee wiki for wiring instructions","DefaultValue":"0","Type":"bool"}
+#define BOOST_PIN 8         //{"Name":"BOOST_PIN","Title":"Boost pwm pin","DefaultValue":"5","Type":"pin;Boost signal","Condition":"ENABLE_BOOSTGAUGE >0"}
 #include "SHPWMPin.h"
-SHPWMPin shBOOSTPIN(BOOST_PIN, true);
+SHPWMPin shBOOSTPIN(BOOST_PIN);
 #endif
 
 // ------------------------ TEMP GAUGE ---------------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-After-Market-Boost-Gauge
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_TEMPGAUGE
-#define ENABLE_TEMPGAUGE 0 //{"Group":"Water Temperature Gauge","Name":"ENABLE_TEMPGAUGE","Title":"E36 Temperature gauge enabled\r\nDeprated see wiki","DefaultValue":"0","Type":"bool"}
-#define TEMP_PIN 5         //{"Name":"TEMP_PIN","Title":"TEMP pwm pin","DefaultValue":"5","Type":"pin;Temperature signal","Condition":"ENABLE_TEMPGAUGE >0"}
+#define ENABLE_TEMPGAUGE 1 //{"Group":"Water Temperature Gauge","Name":"ENABLE_TEMPGAUGE","Title":"E36 Temperature gauge enabled\r\nDeprated see wiki","DefaultValue":"0","Type":"bool"}
+#define TEMP_PIN 8         //{"Name":"TEMP_PIN","Title":"TEMP pwm pin","DefaultValue":"5","Type":"pin;Temperature signal","Condition":"ENABLE_TEMPGAUGE >0"}
 #include "SHPWMPin.h"
-SHPWMPin shTEMPPIN(TEMP_PIN, (int)40);
+SHPWMPin shTEMPPIN(TEMP_PIN);
 #endif
 
 // ------------------------ FUEL GAUGE ---------------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-After-Market-Boost-Gauge
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_FUELGAUGE
-#define ENABLE_FUELGAUGE 0 //{"Group":"Fuel Gauge","Name":"ENABLE_FUELGAUGE","Title":"E36 Fuel gauge enabled\r\nDeprated see wiki","DefaultValue":"0","Type":"bool"}
-#define FUEL_PIN 5         //{"Name":"FUEL_PIN","Title":"FUEL pwm pin","DefaultValue":"5","Type":"pin;Fuel signal","Condition":"ENABLE_FUELGAUGE >0"}
+#define ENABLE_FUELGAUGE 1 //{"Group":"Fuel Gauge","Name":"ENABLE_FUELGAUGE","Title":"E36 Fuel gauge enabled\r\nDeprated see wiki","DefaultValue":"0","Type":"bool"}
+#define FUEL_PIN 8         //{"Name":"FUEL_PIN","Title":"FUEL pwm pin","DefaultValue":"5","Type":"pin;Fuel signal","Condition":"ENABLE_FUELGAUGE >0"}
 #include "SHPWMPin.h"
-SHPWMPin shFUELPIN(FUEL_PIN, (int)40);
+SHPWMPin shFUELPIN(FUEL_PIN);
 #endif
 
 // ------------------------ CONS GAUGE ---------------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-After-Market-Boost-Gauge
 // ----------------------------------------------------------------------------------------------------------
 #ifdef INCLUDE_CONSGAUGE
-#define ENABLE_CONSGAUGE 0 //{"Group":"Consumption Gauge","Name":"ENABLE_CONSGAUGE","Title":"After market consommation gauge enabled\r\n(DO NOT USE, NOT WORKING YET)","DefaultValue":"0","Type":"bool"}
-#define CONS_PIN 5         //{"Name":"CONS_PIN","Title":"CONS pwm pin","DefaultValue":"5","Type":"pin;Consommation signal","Condition":"ENABLE_CONSGAUGE >0"}
+#define ENABLE_CONSGAUGE 1 //{"Group":"Consumption Gauge","Name":"ENABLE_CONSGAUGE","Title":"After market consommation gauge enabled\r\n(DO NOT USE, NOT WORKING YET)","DefaultValue":"0","Type":"bool"}
+#define CONS_PIN 8         //{"Name":"CONS_PIN","Title":"CONS pwm pin","DefaultValue":"5","Type":"pin;Consommation signal","Condition":"ENABLE_CONSGAUGE >0"}
 #include "SHPWMPin.h"
-SHPWMPin shCONSPIN(CONS_PIN, 40);
+SHPWMPin shCONSPIN(CONS_PIN);
 #endif
 
 #ifdef INCLUDE_GAMEPAD
@@ -769,19 +768,19 @@ SHShakeitL298N shShakeitL298N;
 // -------------------- SHAKEIT PWM OUTPUT ----------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-Shake-It
 // --------------------------------------------------------------------------------------------------------
-#define SHAKEITPWM_ENABLED_MOTORS 0 //{"Group":"SHAKEIT PWM Outputs","Name":"SHAKEITPWM_ENABLED_MOTORS","Title":"ShakeIT direct PWM outputs enabled, for fans, TIP120 or any PWM driven custom boards","DefaultValue":"0","Type":"int","Max":4}
+#define SHAKEITPWM_ENABLED_MOTORS 2  //{"Group":"SHAKEIT PWM Outputs","Name":"SHAKEITPWM_ENABLED_MOTORS","Title":"ShakeIT direct PWM outputs enabled, for fans, TIP120 or any PWM driven custom boards","DefaultValue":"0","Type":"int","Max":4}
 #ifdef INCLUDE_SHAKEITPWM
-#define SHAKEITPWM_O1 5             //{"Name":"SHAKEITPWM_O1","Title":"PWM Output 1 pin","DefaultValue":"5","Type":"pin;ShakeIt PWM 1","Condition":"SHAKEITPWM_ENABLED_MOTORS>=1"}
-#define SHAKEITPWM_MIN_OUTPUT_O1 0  //{"Name":"SHAKEITPWM_MIN_OUTPUT_O1","Title":"PWM Output 1 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=1","Max":255}
+#define SHAKEITPWM_O1 8              //{"Name":"SHAKEITPWM_O1","Title":"PWM Output 1 pin","DefaultValue":"5","Type":"pin;ShakeIt PWM 1","Condition":"SHAKEITPWM_ENABLED_MOTORS>=1"}
+#define SHAKEITPWM_MIN_OUTPUT_O1 0   //{"Name":"SHAKEITPWM_MIN_OUTPUT_O1","Title":"PWM Output 1 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=1","Max":255}
 #define SHAKEITPWM_MAX_OUTPUT_O1 255 //{"Name":"SHAKEITPWM_MAX_OUTPUT_O1","Title":"PWM Output 1 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=1","Max":255}
-#define SHAKEITPWM_O2 6             //{"Name":"SHAKEITPWM_O2","Title":"PWM Output 2 pin","DefaultValue":"6","Type":"pin;ShakeIt PWM 2","Condition":"SHAKEITPWM_ENABLED_MOTORS>=2"}
-#define SHAKEITPWM_MIN_OUTPUT_O2 0  //{"Name":"SHAKEITPWM_MIN_OUTPUT_O2","Title":"PWM Output 2 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=2","Max":255}
+#define SHAKEITPWM_O2 9              //{"Name":"SHAKEITPWM_O2","Title":"PWM Output 2 pin","DefaultValue":"6","Type":"pin;ShakeIt PWM 2","Condition":"SHAKEITPWM_ENABLED_MOTORS>=2"}
+#define SHAKEITPWM_MIN_OUTPUT_O2 0   //{"Name":"SHAKEITPWM_MIN_OUTPUT_O2","Title":"PWM Output 2 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=2","Max":255}
 #define SHAKEITPWM_MAX_OUTPUT_O2 255 //{"Name":"SHAKEITPWM_MAX_OUTPUT_O2","Title":"PWM Output 2 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=2","Max":255}
-#define SHAKEITPWM_O3 9             //{"Name":"SHAKEITPWM_O3","Title":"PWM Output 3 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM 3","Condition":"SHAKEITPWM_ENABLED_MOTORS>=3"}
-#define SHAKEITPWM_MIN_OUTPUT_O3 0  //{"Name":"SHAKEITPWM_MIN_OUTPUT_O3","Title":"PWM Output 3 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=3","Max":255}
+#define SHAKEITPWM_O3 10             //{"Name":"SHAKEITPWM_O3","Title":"PWM Output 3 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM 3","Condition":"SHAKEITPWM_ENABLED_MOTORS>=3"}
+#define SHAKEITPWM_MIN_OUTPUT_O3 0   //{"Name":"SHAKEITPWM_MIN_OUTPUT_O3","Title":"PWM Output 3 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=3","Max":255}
 #define SHAKEITPWM_MAX_OUTPUT_O3 255 //{"Name":"SHAKEITPWM_MAX_OUTPUT_O3","Title":"PWM Output 3 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=3","Max":255}
-#define SHAKEITPWM_O4 10            //{"Name":"SHAKEITPWM_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM 4","Condition":"SHAKEITPWM_ENABLED_MOTORS>=4"}
-#define SHAKEITPWM_MIN_OUTPUT_O4 0  //{"Name":"SHAKEITPWM_MIN_OUTPUT_O4","Title":"PWM Output 4 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=4","Max":255}
+#define SHAKEITPWM_O4 20             //{"Name":"SHAKEITPWM_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM 4","Condition":"SHAKEITPWM_ENABLED_MOTORS>=4"}
+#define SHAKEITPWM_MIN_OUTPUT_O4 0   //{"Name":"SHAKEITPWM_MIN_OUTPUT_O4","Title":"PWM Output 4 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=4","Max":255}
 #define SHAKEITPWM_MAX_OUTPUT_O4 255 //{"Name":"SHAKEITPWM_MAX_OUTPUT_O4","Title":"PWM Output 4 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWM_ENABLED_MOTORS>=4","Max":255}
 
 #include "SHShakeitPWM.h"
@@ -791,34 +790,34 @@ SHShakeitPWM shShakeitPWM;
 // -------------------- SHAKEIT PWM FANS OUTPUT ----------------------------------------------------------------
 // https://github.com/zegreatclan/SimHub/wiki/Arduino-Shake-It
 // --------------------------------------------------------------------------------------------------------
-#define SHAKEITPWMFANS_ENABLED_MOTORS 3        //{"Group":"SHAKEIT PWM FANS Outputs","Name":"SHAKEITPWMFANS_ENABLED_MOTORS","Title":"ShakeIT direct PWM fans enabled (25khz PWM)\r\nArduino Uno : pins 9 or 10\r\nArduino Leonardo pins : 9, 10 or 11\r\nArduino Mega pins : 11, 12 or 13","DefaultValue":"0","Type":"int","Max":3}
+#define SHAKEITPWMFANS_ENABLED_MOTORS 2        //{"Group":"SHAKEIT PWM FANS Outputs","Name":"SHAKEITPWMFANS_ENABLED_MOTORS","Title":"ShakeIT direct PWM fans enabled (25khz PWM)\r\nArduino Uno : pins 9 or 10\r\nArduino Leonardo pins : 9, 10 or 11\r\nArduino Mega pins : 11, 12 or 13","DefaultValue":"0","Type":"int","Max":3}
 
 #ifdef INCLUDE_SHAKEITPWMFANS
-#define SHAKEITPWMFANS_O1 2                    //{"Name":"SHAKEITPWMFANS_O1","Title":"PWM Output 1 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM Fan 1","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1"}
+#define SHAKEITPWMFANS_O1 8                    //{"Name":"SHAKEITPWMFANS_O1","Title":"PWM Output 1 pin","DefaultValue":"9","Type":"pin;ShakeIt PWM Fan 1","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O1 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O1","Title":"PWM Output 1 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O1 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O1","Title":"PWM Output 1 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_01 6          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_01","Title":"PWM Output 1 optional on/off relay pin","DefaultValue":"4","Type":"pin;PWN FAN 1 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_01 -1          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_01","Title":"PWM Output 1 optional on/off relay pin","DefaultValue":"4","Type":"pin;PWN FAN 1 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_01 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_01","Title":"PWM Output 1 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1 && SHAKEITPWMFANS_RELAY_PIN_01 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_01 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_01","Title":"PWM Output 1 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay must be off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=1 && SHAKEITPWMFANS_RELAY_PIN_01 > 0"}
 
-#define SHAKEITPWMFANS_O2 3                    //{"Name":"SHAKEITPWMFANS_O2","Title":"PWM Output 2 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 2","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2"}
+#define SHAKEITPWMFANS_O2 9                    //{"Name":"SHAKEITPWMFANS_O2","Title":"PWM Output 2 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 2","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O2 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O2","Title":"PWM Output 2 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O2 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O2","Title":"PWM Output 2 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_02 7          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_02","Title":"PWM Output 2 optional on/off relay pin","DefaultValue":"5","Type":"pin;PWN FAN 2 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_02 -1          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_02","Title":"PWM Output 2 optional on/off relay pin","DefaultValue":"5","Type":"pin;PWN FAN 2 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_02 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_02","Title":"PWM Output 2 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2 && SHAKEITPWMFANS_RELAY_PIN_02 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_02 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_02","Title":"PWM Output 2 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=2 && SHAKEITPWMFANS_RELAY_PIN_02 > 0"}
 
-#define SHAKEITPWMFANS_O3 4                    //{"Name":"SHAKEITPWMFANS_O3","Title":"PWM Output 3 pin","DefaultValue":"11","Type":"pin;ShakeIt PWM Fan 3","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3"}
+#define SHAKEITPWMFANS_O3 -1                    //{"Name":"SHAKEITPWMFANS_O3","Title":"PWM Output 3 pin","DefaultValue":"11","Type":"pin;ShakeIt PWM Fan 3","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O3 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O3","Title":"PWM Output 3 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O3 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O3","Title":"PWM Output 3 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_03 8          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_03","Title":"PWM Output 3 optional on/off relay pin","DefaultValue":"6","Type":"pin;PWN FAN 3 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_03 -1          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_03","Title":"PWM Output 3 optional on/off relay pin","DefaultValue":"6","Type":"pin;PWN FAN 3 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_03 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_03","Title":"PWM Output 3 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3 && SHAKEITPWMFANS_RELAY_PIN_03 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_03 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_03","Title":"PWM Output 3 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=3 && SHAKEITPWMFANS_RELAY_PIN_03 > 0"}
 
-#define SHAKEITPWMFANS_O4 5                    //{"Name":"SHAKEITPWMFANS_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 4","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4"}
+#define SHAKEITPWMFANS_O4 -1                    //{"Name":"SHAKEITPWMFANS_O4","Title":"PWM Output 4 pin","DefaultValue":"10","Type":"pin;ShakeIt PWM Fan 4","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4"}
 #define SHAKEITPWMFANS_MIN_OUTPUT_O4 0         //{"Name":"SHAKEITPWMFANS_MIN_OUTPUT_O4","Title":"PWM Output 4 min (lower values will disable output)","DefaultValue":"0","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Max":255}
 #define SHAKEITPWMFANS_MAX_OUTPUT_O4 255       //{"Name":"SHAKEITPWMFANS_MAX_OUTPUT_O4","Title":"PWM Output 4 max","DefaultValue":"255","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Max":255}
-#define SHAKEITPWMFANS_RELAY_PIN_04 9          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_04","Title":"PWM Output 4 optional on/off relay pin","DefaultValue":"7","Type":"pin;PWN FAN 4 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Min":-1}
+#define SHAKEITPWMFANS_RELAY_PIN_04 -1          //{"Name":"SHAKEITPWMFANS_RELAY_PIN_04","Title":"PWM Output 4 optional on/off relay pin","DefaultValue":"7","Type":"pin;PWN FAN 4 relay","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4","Min":-1}
 #define SHAKEITPWMFANS_RELAY_DELAY_04 2000     //{"Name":"SHAKEITPWMFANS_RELAY_DELAY_04","Title":"PWM Output 4 optional relay off delay (ms)","DefaultValue":"2000","Type":"int","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4 && SHAKEITPWMFANS_RELAY_PIN_04 >0"}
 #define SHAKEITPWMFANS_RELAY_REVERSELOGIC_04 0 //{"Name":"SHAKEITPWMFANS_RELAY_REVERSELOGIC_04","Title":"PWM Output 4 optional relay reversed logic\nWhen disabled relay pin will be LOW when the relay is off,\r\nOtherwise when enabled the pin will be HIGH when the relay is off","DefaultValue":"0","Type":"bool","Condition":"SHAKEITPWMFANS_ENABLED_MOTORS>=4 && SHAKEITPWMFANS_RELAY_PIN_04 > 0"}
 
