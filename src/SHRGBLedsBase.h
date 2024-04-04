@@ -13,7 +13,7 @@ protected:
 		_righttoleft = righttoleft;
 	}
 
-	virtual void setPixelColor(uint8_t lednumber, uint8_t r, uint8_t g, uint8_t b);
+	virtual void setPixelColor(uint8_t lednumber, uint8_t r, uint8_t g, uint8_t b) = 0;
 
 public:
 
