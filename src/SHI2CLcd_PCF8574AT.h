@@ -6,13 +6,14 @@
 
 class SHI2CLcd : public SHI2CLcdBase {
 private:
-	LiquidCrystal_I2C * I2CLCD;
+	LCD_I2C * I2CLCD;
 
 public:
-	void begin(LiquidCrystal_I2C * I2CLCDInstance, int width, int height, bool test) {
-		// SHI2CLcdBase::begin(width, height, test);
+	void begin(LCD_I2C * I2CLCDInstance, int width, int height, bool test, TwoWire &wirePort) {
+		// is this commented out to force the logic in the "else" branch of the base's clase read method?
+		//SHI2CLcdBase::begin(width, height, test);
 		I2CLCD = I2CLCDInstance;
-		I2CLCD->init();
+		I2CLCD->begin();
 		I2CLCD->backlight();
 		I2CLCD->print("Hello world...");
 		if(!test) {

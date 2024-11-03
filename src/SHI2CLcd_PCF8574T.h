@@ -12,14 +12,12 @@ private:
 	LiquidCrystal_PCF8574 * I2CLCD;
 
 public:
-	void begin(LiquidCrystal_PCF8574 * I2CLCDInstance, int width, int height, bool test) {
+	void begin(LiquidCrystal_PCF8574 * I2CLCDInstance, int width, int height, bool test, TwoWire &wirePort) {
 		SHI2CLcdBase::begin(width, height, test);
 		I2CLCD = I2CLCDInstance;
-		I2CLCD->begin(width, height); // initialize the lcd
+		I2CLCD->begin(width, height, wirePort);
 		I2CLCD->setBacklight(255);
-		
 		I2CLCD->print("Hello world...");
-
 		if (!test)
 			I2CLCD->clear();
 	}
