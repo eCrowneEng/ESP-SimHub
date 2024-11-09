@@ -39,7 +39,7 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_TM1637                      //{"Name":"INCLUDE_TM1637","Type":"autodefine","Condition":"[TM1637_ENABLEDMODULES]>0"}
 //#define INCLUDE_TM1638                      //{"Name":"INCLUDE_TM1638","Type":"autodefine","Condition":"[TM1638_ENABLEDMODULES]>0"}
 //#define INCLUDE_OLED                        //{"Name":"INCLUDE_OLED","Type":"autodefine","Condition":"[ENABLED_OLEDLCD]>0"}
-#define INCLUDE_I2CLCD                      //{"Name":"INCLUDE_I2CLCD","Type":"autodefine","Condition":"[I2CLCD_enabled]>0"}
+//#define INCLUDE_I2CLCD                      //{"Name":"INCLUDE_I2CLCD","Type":"autodefine","Condition":"[I2CLCD_enabled]>0"}
 //#define INCLUDE_MAX7221MATRIX               //{"Name":"INCLUDE_MAX7221MATRIX","Type":"autodefine","Condition":"[MAX7221_MATRIX_ENABLED]>0"}
 //#define INCLUDE_MAX7221_MODULES             //{"Name":"INCLUDE_MAX7221_MODULES","Type":"autodefine","Condition":"[MAX7221_ENABLEDMODULES]>0"}
 //#define INCLUDE_SHAKEITPWMFANS              //{"Name":"INCLUDE_SHAKEITPWMFANS","Type":"autodefine","Condition":"[SHAKEITPWMFANS_ENABLED_MOTORS]>0"}
@@ -363,15 +363,15 @@ SHRGBMatrixSunfounderSH104P shRGBMatrixSunfounderSH104P;
 // I2C LiquidCristal
 // http://www.dx.com/p/arduino-iic-i2c-serial-3-2-lcd-2004-module-display-138611#.Vb0QtW7tlBd
 // -------------------------------------------------------------------------------------------------------
-#define I2CLCD_enabled 1   //{"Group":"20x4 I2C LCD","Name":"I2CLCD_enabled","Title":"I2C LCD (2004) enabled\r\nUno, Ethernet, Nano : A4(SDA), A5(SCL)\r\nMega2560 : 20 (SDA), 21 (SCL)\r\nLeonardo : 2 (SDA), 3 (SCL)\r\nDue : 20 (SDA), 21 (SCL), SDA1, SCL1","DefaultValue":"0","Type":"bool","Pins":"328:18,I2C LCD SDA;19,I2C LCD SCL|micro:2,I2C LCD SDA;3,I2C LCD SCL|mega:20,I2C LCD SDA;21,I2C LCD SCL"}
+#define I2CLCD_enabled 0   //{"Group":"20x4 I2C LCD","Name":"I2CLCD_enabled","Title":"I2C LCD (2004) enabled\r\nUno, Ethernet, Nano : A4(SDA), A5(SCL)\r\nMega2560 : 20 (SDA), 21 (SCL)\r\nLeonardo : 2 (SDA), 3 (SCL)\r\nDue : 20 (SDA), 21 (SCL), SDA1, SCL1","DefaultValue":"0","Type":"bool","Pins":"328:18,I2C LCD SDA;19,I2C LCD SCL|micro:2,I2C LCD SDA;3,I2C LCD SCL|mega:20,I2C LCD SDA;21,I2C LCD SCL"}
 #ifdef INCLUDE_I2CLCD
 #define I2CLCD_size 1      //{"Name":"I2CLCD_size","Title":"LCD size","DefaultValue":"0","Type":"list","Condition":"I2CLCD_enabled>0","ListValues":"0,20x4;1,16x2"}
-#define I2CLCD_ADDRESS 0x27 //{"Name":"I2CLCD_ADDRESS","Title":"I2C address (0x30, 0x27 ... )","DefaultValue":"0x3f","Type":"hex","Condition":"I2CLCD_enabled>0"}
+#define I2CLCD_ADDRESS 0x27//{"Name":"I2CLCD_ADDRESS","Title":"I2C address (0x30, 0x27 ... )","DefaultValue":"0x3f","Type":"hex","Condition":"I2CLCD_enabled>0"}
 #define I2CLCD_LIBRARY 1   //{"Name":"I2CLCD_LIBRARY","Title":"I2C library","DefaultValue":"0","Type":"list","Condition":"I2CLCD_enabled>0","ListValues":"0,PCF8574AT (DFRobot);1,PCF8574T"}
 #define I2CLCD_TEST 0      //{"Name":"I2CLCD_TEST","Title":"TESTING MODE : Show hello world at startup","DefaultValue":"0","Type":"bool","Condition":"I2CLCD_enabled>0"}
 // TODO: move these top level because the i2c bus is universal, not specific to this LCD
-#define I2CLCD_SDA SDA // define your i2c SDA pin here, it is set by default to the hardware pin
-#define I2CLCD_SCL SCL // define your i2c SCL pin here, it is set by default to the hardware pin
+#define I2CLCD_SDA SDA // define your i2c SDA pin here, it is set by default to the hardware pin but you can set it to any number
+#define I2CLCD_SCL SCL // define your i2c SCL pin here, it is set by default to the hardware pin but you can set it to any number
 
 #if I2CLCD_size
 #define I2CLCD_WIDTH 16
