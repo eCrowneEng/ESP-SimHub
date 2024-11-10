@@ -50,7 +50,7 @@ static const unsigned char halfStepsTable[][4] =
 typedef void(*SHRotaryEncoderPositionChanged) (int, int, byte);
 
 class SHRotaryEncoder {
-private:
+protected:
 
 	FastDigitalPin outputA; // CLK
 	FastDigitalPin outputB; // DT
@@ -74,7 +74,7 @@ private:
 
 public:
 
-	void begin(uint8_t outputAPin, uint8_t outputBPin, int buttonPin, bool reverse, bool enablePullup, byte encoderid, bool half, SHRotaryEncoderPositionChanged changedcallback) {
+virtual void begin(uint8_t outputAPin, uint8_t outputBPin, int buttonPin, bool reverse, bool enablePullup, byte encoderid, bool half, SHRotaryEncoderPositionChanged changedcallback) {
 		halfSteps = half;
 		buttonDebouncer.begin(50);
 		outputA.begin((!reverse) ? outputAPin : outputBPin);
@@ -93,19 +93,19 @@ public:
 		buttonLastState = button.digitalRead();
 		positionChangedCallback = changedcallback;
 	}
-
-	uint8_t getDirection(uint8_t delay, unsigned long referenceTime) {
+	
+virtual	uint8_t getDirection(uint8_t delay, unsigned long referenceTime) {
 		if (directionLastChange != 255 && (referenceTime - positionLastChanged) < delay) {
 			return directionLastChange;
 		}
 		return 255;
 	}
 
-	uint8_t getPressed() {
+virtual	uint8_t getPressed() {
 		return button.isValid() && !buttonLastState;
 	}
 
-	void read() {
+virtual	void read() {
 		if (!halfSteps)
 			inputLastState = fullStepsTable[inputLastState & 0xf][(outputB.digitalRead() << 1) | outputA.digitalRead()];
 		else {
@@ -119,12 +119,14 @@ public:
 			positionChangedCallback(id, counter, 0);
 			positionLastChanged = millis();
 			directionLastChange = 0;
+			//Serial.print("DIR_CCW");
 		}
 		else if (direction == DIR_CW) {
 			counter--;
 			positionChangedCallback(id, counter, 1);
 			positionLastChanged = millis();
 			directionLastChange = 1;
+			//Serial.print("DIR_CW");
 		}
 
 		if (button.isValid()) {
