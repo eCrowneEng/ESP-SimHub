@@ -18,6 +18,21 @@ const uint8_t crc_table_crc8[256] PROGMEM = { 0,213,127,170,254,43,129,84,41,252
 
 typedef void(*IdleFunction) (bool);
 
+/**
+ * Example message:
+ * Hello
+ * 01 01 FF 03 03 31 10 6A
+ * header twice, message id #255, message payload is 0x03 0x31 0x10, CRC8 checksum of message is 0x6A
+ * message payload is 0x03 (header) 0x31 (command for hello) 0x10 (end of line)
+ * 
+ * Expected response is 
+ * 03 01
+ * 
+ * If response is 
+ * 04 01 {number}
+ * then message with id {number} is invalid, due to reason {number}
+ */
+
 class ARQSerial
 {
 private:
@@ -50,7 +65,7 @@ private:
 #endif
 				return c;
 			}
-		} while (millis() - fsr_startMillis < 100);
+		} while (millis() - fsr_startMillis < 50);
 		return -1;
 	}
 

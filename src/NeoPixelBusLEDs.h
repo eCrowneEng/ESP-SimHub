@@ -44,7 +44,7 @@
 
 
 // We use different methods for each type of board based on available features and their limitations
-#if ESP32
+#if ARDUINO_ARCH_ESP32
 //****** ESP32 ******
 // There are more variations of the methods available in this file
 //  if you find that these don't work for you, feel free to read more about these here, and be aware of
@@ -57,15 +57,16 @@
 // little CPU Usage and low memory but many interrupts run for it and requires hardware buffer
 // Supports all pins below GPIO34
 //******
-#define method NeoEsp32Rmt0Ws2812xMethod
-
+#if ( !CONFIG_IDF_TARGET_ESP32S3 ) // https://github.com/Makuna/NeoPixelBus/issues/815 (temporary)
+// #define method NeoEsp32Rmt0Ws2812xMethod
+#endif
 
 //******
 // I2S
 // little CPU Usage, more memory; Not available for S3 or C3 boards
 // Supports any output pin
 //******
-#if ( !CONFIG_IDF_TARGET_ESP32S2 || !CONFIG_IDF_TARGET_ESP32C3 ) // not supported by these boards 
+#if ( !CONFIG_IDF_TARGET_ESP32S2 && !CONFIG_IDF_TARGET_ESP32C3 && !CONFIG_IDF_TARGET_ESP32S3 ) // not supported by these boards 
 //#define method NeoEsp32I2s0X8Ws2812xMethod // Uses the I2S 0 peripheral in 8 channel parallel mode
 //#define method NeoEsp32I2s0X16Ws2812xMethod // Uses the I2S 0 peripheral in 16 channel parallel mode
 //#define method NeoEsp32I2s0Ws2812xMethod // Uses the I2S 0 peripheral
@@ -77,7 +78,7 @@
 // Uses a lot of CPU, and interrupts such as the ones ran for WiFi make it unstable.
 // Supports all pins below GPIO32
 //******
-// #define method NeoEsp32BitBangWs2812xMethod
+#define method NeoEsp32BitBangWs2812xMethod
 
 
 // Pick your GPIO pin based on the limitations of the selected method above
@@ -207,7 +208,6 @@ void neoPixelBusRead()
 
             for (j = startled; j < startled + numleds; j++)
             {
-                /*	if (ENABLE_BLUETOOTH == 0) {*/
                 r = FlowSerialTimedRead();
                 g = FlowSerialTimedRead();
                 b = FlowSerialTimedRead();

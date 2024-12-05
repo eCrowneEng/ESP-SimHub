@@ -14,5 +14,6 @@ public:
     size_t write(const uint8_t *buffer, size_t size);
     size_t write(const char *buffer, size_t size);
     size_t write(const char *str);
+
     using LoopbackStream::write;
 };

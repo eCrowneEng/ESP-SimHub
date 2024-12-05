@@ -9,7 +9,7 @@
 #include <FullLoopbackStream.h>
 
 
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
 // all the logs, more memory usage
 #define _ESPASYNC_WIFIMGR_LOGLEVEL_    4
 #else
@@ -155,7 +155,7 @@ void check_WiFi()
 {
   if ( (WiFi.status() != WL_CONNECTED) )
   {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
     Serial.println(F("\nWiFi lost. Call connectMultiWiFi in loop"));
 #endif
     connectMultiWiFi();
@@ -243,13 +243,13 @@ void saveConfigData()
 #endif
 
 static void handleError(void* arg, AsyncClient* client, int8_t error) {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
 	Serial.printf("\n connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str());
 #endif
 }
 
 static void handleDisconnect(void* arg, AsyncClient* client) {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
 	Serial.printf("\n client %s disconnected \n", client->remoteIP().toString().c_str());
 #endif
     std::vector<AsyncClient*>::iterator it = clients.begin();
@@ -263,7 +263,7 @@ static void handleDisconnect(void* arg, AsyncClient* client) {
 }
 
 static void handleTimeOut(void* arg, AsyncClient* client, uint32_t time) {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
 	Serial.printf("\n client ACK timeout ip: %s \n", client->remoteIP().toString().c_str());
 #endif
 }
@@ -273,8 +273,13 @@ class TcpSerialBridge2
 public:
   TcpSerialBridge2(uint16_t tcpPort) : server(tcpPort) {}
 
+
+  void begin(unsigned long baud) {
+    // NO OP;
+  }
+
   void setup(FullLoopbackStream *outgoingStream, FullLoopbackStream *incomingStream) {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
     Serial.begin(115200);
     delay(200);
 #endif
@@ -300,7 +305,7 @@ public:
       {
         // prevents debug info from the library to hide err message.
         delay(100);
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
         Serial.println(F("LittleFS failed!"));
 #endif
 
@@ -323,7 +328,7 @@ public:
     AsyncDNSServer dnsServer;
     ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "AutoConnectAP");
 #endif
-    ESPAsync_wifiManager.setDebugOutput(DEBUG_TCP_BRIDGE);
+    ESPAsync_wifiManager.setDebugOutput(DEBUG_BRIDGE);
 
     Router_SSID = ESPAsync_wifiManager.WiFi_SSID();
     Router_Pass = ESPAsync_wifiManager.WiFi_Pass();
@@ -339,7 +344,7 @@ public:
 #else
       ESPAsync_wifiManager.setConfigPortalTimeout(120); //If no access point name has been previously entered disable timeout.
 #endif
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       Serial.println(F("Got ESP Self-Stored Credentials. Timeout 120s for Config Portal"));
 #endif
     }
@@ -352,14 +357,14 @@ public:
       configDataLoaded = true;
 
       ESPAsync_wifiManager.setConfigPortalTimeout(120); //If no access point name has been previously entered disable timeout.
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       Serial.println(F("Got stored Credentials. Timeout 120s for Config Portal"));
 #endif
     }
     else
     {
       // Enter Config Portal only if no stored SSID on  file
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       Serial.println(F("Open Config Portal without Timeout: No stored Credentials."));
 #endif
       initialConfig = true;
@@ -378,7 +383,7 @@ public:
       // SSID for Config Portal
       String AP_SSID = "ESP_" + chipID + "-SH";
 
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       Serial.println(F("We haven't got any access point credentials, so get them now"));
       Serial.print(F("Starting configuration portal @ "));
       Serial.print(F("192.168.4.1"));
@@ -388,13 +393,13 @@ public:
       // Starts an access point
       if ( !ESPAsync_wifiManager.startConfigPortal(AP_SSID.c_str(), NULL) )
       {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
         Serial.println(F("Not connected to WiFi but continuing anyway."));
 #endif
       }
       else
       {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
         Serial.println(F("WiFi connected...yay :)"));
 #endif
       }
@@ -437,7 +442,7 @@ public:
 
       if ( WiFi.status() != WL_CONNECTED )
       {
-  #if DEBUG_TCP_BRIDGE
+  #if DEBUG_BRIDGE
         Serial.println(F("ConnectMultiWiFi in setup"));
   #endif
         connectMultiWiFi();
@@ -445,7 +450,7 @@ public:
     }
 #endif
 
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
     Serial.print(F("After waiting "));
     Serial.print((float) (millis() - startedAt) / 1000L);
     Serial.print(F(" secs more in setup(), connection result is "));
@@ -463,7 +468,7 @@ public:
 
     server.setNoDelay(true);
     server.onClient([this](void *arg, AsyncClient* client){
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       Serial.printf("\n new client has been connected to server, ip: %s", client->remoteIP().toString().c_str());
 #endif
 
@@ -471,7 +476,7 @@ public:
       clients.push_back(client);
       
       // register events
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
       client->onAck([&](void* arg, AsyncClient* client, size_t len, uint32_t time){ Serial.printf("\n ack: %d %d\n", len, time); }, NULL);
 #endif
       client->onData([&](void* arg, AsyncClient* client, void *data, size_t len){ this->handleData(arg, client, data, len); }, NULL);
@@ -494,7 +499,7 @@ public:
     size_t availableLength = this->outgoingStream->available();
     if (availableLength)
     {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
     Serial.printf("flushing with this much data: %d \n", availableLength);
 #endif
       if (clients.size() == 0) {
@@ -512,9 +517,13 @@ public:
       {
         // send data to client
         size_t total = client->write(sbuf, availableLength);
-#if DEBUG_TCP_BRIDGE
-	  Serial.printf("\n ---> data sent to client %s: %d bytes \n", client->remoteIP().toString().c_str(), total);
-    Serial.printf("%d %d\n",sbuf[0], sbuf[1]);
+#if DEBUG_BRIDGE
+      Serial.printf("\n ---> data sent to client %s: %d bytes \n", client->remoteIP().toString().c_str(), total);
+      // printing all bytes sent as individual bytes in hex
+      for (size_t i = 0; i < availableLength; i++) {
+        Serial.printf("%02X ", sbuf[i]);
+      }
+      Serial.println(" ");
 #endif
       }
     }
@@ -522,7 +531,7 @@ public:
 
 private:
   void handleData(void* arg, AsyncClient* client, void *data, size_t len) {
-#if DEBUG_TCP_BRIDGE
+#if DEBUG_BRIDGE
 	  Serial.printf("\n <--- data received from client %s \n", client->remoteIP().toString().c_str());
     // this line may cause problems with the c++ linker. If you need deep debugging the actual data received, and it compiles fine if you
     //  remove the commenting below, then you're good.
@@ -531,6 +540,11 @@ private:
 #endif
     const uint8_t *castData = (uint8_t*)data;
     this->incomingStream->write(castData, (size_t)len);
+    // printing all bytes received as individual bytes
+    for (size_t i = 0; i < len; i++) {
+      Serial.printf("%02X ", castData[i]);
+    }
+    Serial.println(" ");
   }
 
   AsyncServer server;

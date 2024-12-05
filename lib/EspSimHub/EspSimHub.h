@@ -16,3 +16,7 @@
 //  other format (ala UUID), but now it's just a unique
 //  string tied to the device.
 String getUniqueId();
+
+#define SERIAL 0B00
+#define WIFI 0B01
+#define ESP_NOW 0B10

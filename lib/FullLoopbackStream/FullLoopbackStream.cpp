@@ -21,3 +21,7 @@ size_t FullLoopbackStream::write(const uint8_t *buffer, size_t size)
     }
     return n;
 }
+
+size_t FullLoopbackStream::write(const char *buffer, size_t size) {
+    return write((const uint8_t*)buffer, size);
+}

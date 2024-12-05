@@ -1,33 +1,59 @@
 #include <Arduino.h>
 #include <EspSimHub.h>
 
-// No longer have to define whether it's an ESP32 or ESP8266, just do an initial compilation and
-//  VSCode will pick  up the right environment from platformio.ini
 
-#define INCLUDE_WIFI false
+/**
+ * Enable ESP-NOW or WiFi or None for Serial
+ */
+#define CONNECTION_TYPE SERIAL // or WIFI or ESP_NOW
+
+#if CONNECTION_TYPE != SERIAL
+// Emits extra events to Serial that show network communication, set to false to save memory and make faster
+#define DEBUG_BRIDGE true
+#endif
+
+/**
+ * ESP-NOW configuration
+ */
+#if CONNECTION_TYPE == ESP_NOW
+// MAC Address of esp connected to the computer directly
+#define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x90, 0x7A, 0x00}
+#endif // end CONNECTION_TYPE == ESP_NOW
+
+
+/**
+ * WiFi configuration
+ */
+#if CONNECTION_TYPE == WIFI
 // Less secure if you plan to commit or share your files, but saves a bunch of memory. 
 //  If you hardcode credentials the device will only work in your network
 #define USE_HARDCODED_CREDENTIALS false
 
-#if INCLUDE_WIFI
 #if USE_HARDCODED_CREDENTIALS
 #define WIFI_SSID "Wifi NAME"
 #define WIFI_PASSWORD "WiFi Password"
 #endif
 
 #define BRIDGE_PORT 10001 // Perle TruePort uses port 10,001 for the first serial routed to the client
-#define DEBUG_TCP_BRIDGE false // emits extra events to Serial that show network communication, set to false to save memory and make faster
 
 #include <TcpSerialBridge2.h>
-#include <ECrowneWifi.h>
+#endif // end CONNECTION_TYPE == WIFI
+
+
+/**
+ * Data proxy configuration
+ */
+#if CONNECTION_TYPE != SERIAL
+#include <ECrowneDataProxy.h>
 #include <FullLoopbackStream.h>
 
 FullLoopbackStream outgoingStream;
 FullLoopbackStream incomingStream;
+#endif // end CONNECTION_TYPE != SERIAL
 
-#endif // INCLUDE_WIFI
 
-#define DEVICE_NAME "HelloWorldEsp" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
+
+#define DEVICE_NAME "ESP-SimHub Device" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
 
 // Known working features:
 //  
@@ -71,10 +97,8 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
 
 
-// Gamepad support =======================
-// Untested, it may work with ESP32 S3 and newer devices that support USB HID
-//  If you want to test, remove this "if defined ..."
-#if defined (__AVR_ATmega32U4__)
+// Gamepad support (NOT WORKING YET) =======================
+#ifdef ARDUINO_USB_MODE
 //#define INCLUDE_GAMEPAD                     //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
 #endif
 //#define INCLUDE_GAMEPADAXIS                 //{"Name":"INCLUDE_GAMEPADAXIS","Type":"autodefine","Condition":"[GAMEPAD_AXIS_01_ENABLED]>0 || [GAMEPAD_AXIS_02_ENABLED]>0 || [GAMEPAD_AXIS_03_ENABLED]>0"}
@@ -84,6 +108,14 @@ FullLoopbackStream incomingStream;
 #error Gamepad option must be enabled in order to use analog axis.
 #endif // ! INCLUDE_GAMEPAD
 #endif
+
+// USB mode verification
+#ifdef INCLUDE_GAMEPAD
+#if ARDUINO_USB_MODE == 1
+#error "Device USB is not in OTG mode"
+#endif
+#endif
+
 // END Gamepad support ===================
 
 
@@ -91,12 +123,7 @@ FullLoopbackStream incomingStream;
 
 
 
-#if (defined(__AVR__))
-#include <avr\pgmspace.h>
-#else
 #include <pgmspace.h>
-#endif
-
 #include <EEPROM.h>
 #include <SPI.h>
 #include "Arduino.h"
@@ -989,9 +1016,9 @@ unsigned long lastMatrixRefresh = 0;
 
 
 void idle(bool critical) {
-#if INCLUDE_WIFI
+#if CONNECTION_TYPE != SERIAL
 	yield();
-	ECrowneWifi::flush();
+	ECrowneDataProxy::flush();
 #endif
 
 #if(GAMEPAD_AXIS_01_ENABLED == 1)
@@ -1109,14 +1136,14 @@ void buttonMatrixStatusChanged(int buttonId, byte Status) {
 
 void setup()
 {
-#if INCLUDE_WIFI
-#if DEBUG_TCP_BRIDGE
+#if CONNECTION_TYPE != SERIAL
+#if DEBUG_BRIDGE
 	Serial.begin(115200);
 #endif
 #endif
 
-#if INCLUDE_WIFI
-	ECrowneWifi::setup(&outgoingStream, &incomingStream);
+#if CONNECTION_TYPE != SERIAL
+	ECrowneDataProxy::setup(&outgoingStream, &incomingStream);
 #endif
 
 	//#ifdef INCLUDE_TEMPGAUGE
@@ -1374,8 +1401,8 @@ unsigned long lastSerialActivity = 0;
 
 
 void loop() {
-#if INCLUDE_WIFI
-	ECrowneWifi::loop();
+#if CONNECTION_TYPE != SERIAL
+	ECrowneDataProxy::loop();
 #endif
 
 #ifdef INCLUDE_SHAKEITL298N
@@ -1411,29 +1438,13 @@ void loop() {
 			lastSerialActivity = millis();
 			// Read command
 			loop_opt = FlowSerialTimedRead();
-
 			switch(loop_opt) {
 				case '1': Command_Hello(); break;
-				case '8': Command_SetBaudrate(); break;
-				case 'J': Command_ButtonsCount(); break;
+				case '0': Command_Features(); break;
+				case '4': Command_RGBLEDSCount(); break;
 				case '2': Command_TM1638Count(); break;
 				case 'B': Command_SimpleModulesCount(); break;
-				case 'A': Command_Acq(); break;
-				case 'N': Command_DeviceName(); break;
-				case 'I': Command_UniqueId(); break;
-				case '0': Command_Features(); break;
-				case '3': Command_TM1638Data(); break;
-				case 'V': Command_Motors(); break;
-				case 'S': Command_7SegmentsData(); break;
-				case '4': Command_RGBLEDSCount(); break;
-				case '6': Command_RGBLEDSData(); break;
-				case 'R': Command_RGBMatrixData(); break;
-				case 'M': Command_MatrixData(); break;
-				case 'G': Command_GearData(); break;
-				case 'L': Command_I2CLCDData(); break;
-				case 'K': Command_GLCDData();  break; // Nokia | OLEDS
-				case 'P': Command_CustomProtocolData(); break;
-				case 'X':
+				case 'X': {
 					String xaction = FlowSerialReadStringUntil(' ', '\n');
 					if (xaction == F("list")) Command_ExpandedCommandsList();
 					else if (xaction == F("mcutype")) Command_MCUType();
@@ -1444,8 +1455,23 @@ void loop() {
 					else if (xaction == F("fuel")) Command_FuelData();
 					else if (xaction == F("cons")) Command_ConsData();
 					else if (xaction == F("encoderscount")) Command_EncodersCount();
-				break;
-
+					break;
+				}
+				case 'J': Command_ButtonsCount(); break;
+				case 'A': Command_Acq(); break;
+				case 'N': Command_DeviceName(); break;
+				case 'I': Command_UniqueId(); break;
+				case '3': Command_TM1638Data(); break;
+				case 'V': Command_Motors(); break;
+				case 'S': Command_7SegmentsData(); break;
+				case '6': Command_RGBLEDSData(); break;
+				case 'R': Command_RGBMatrixData(); break;
+				case 'M': Command_MatrixData(); break;
+				case 'G': Command_GearData(); break;
+				case 'L': Command_I2CLCDData(); break;
+				case 'K': Command_GLCDData();  break; // Nokia | OLEDS
+				case 'P': Command_CustomProtocolData(); break;
+				case '8': Command_SetBaudrate(); break;
 			}
 		}
 	}
