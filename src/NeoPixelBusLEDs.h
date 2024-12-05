@@ -44,7 +44,7 @@
 
 
 // We use different methods for each type of board based on available features and their limitations
-#if ARDUINO_ARCH_ESP32
+#ifdef ESP32
 //****** ESP32 ******
 // There are more variations of the methods available in this file
 //  if you find that these don't work for you, feel free to read more about these here, and be aware of

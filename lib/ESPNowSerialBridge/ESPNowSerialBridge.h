@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <FullLoopbackStream.h>
-#if ESP32
+#ifdef ESP32
 #include <esp_now.h>
 #include <WiFi.h>
 #else
@@ -22,7 +22,7 @@ public:
   EspNowMessage outgoingMessage;
   EspNowMessage incomingMessage;
   EspNowMessage bridgeMessage;
-#if ESP32
+#ifdef ESP32
   esp_now_peer_info_t peerInfo;
 #endif
 
@@ -76,7 +76,7 @@ public:
     Serial.println("WiFi mode set to STA");
 
     // Init ESP-NOW
-#if ESP32
+#ifdef ESP32
     if (esp_now_init() != ESP_OK) {
 #else
     if (esp_now_init() != 0) {
@@ -86,7 +86,7 @@ public:
     }
     Serial.println("ESP-NOW initialized");
 
-#if ESP32
+#ifdef ESP32
     // Register peer
     memcpy(peerInfo.peer_addr, this->peerMac, 6);
     peerInfo.channel = 1;  
@@ -99,7 +99,7 @@ public:
     esp_now_register_recv_cb(staticHandleData);
 
     // Register peer
-#if ESP32
+#ifdef ESP32
     if (esp_now_add_peer(&peerInfo) != ESP_OK){
 #else
     if (esp_now_add_peer(this->peerMac, ESP_NOW_ROLE_COMBO, 1, NULL, 0) != 0) {
@@ -147,7 +147,7 @@ public:
       uint8_t buffer[sizeof(EspNowMessage)];
       memcpy(buffer, &message, sizeof(EspNowMessage));
       // Send buffer to ESP-NOW
-#if ESP32
+#ifdef ESP32
       esp_err_t result = esp_now_send(peerInfo.peer_addr, buffer, sizeof(EspNowMessage));
       if (result != ESP_OK) {
         const char* error_msg = esp_err_to_name(result);
@@ -190,7 +190,7 @@ public:
   }
 
 // Callback when data is sent
-#if ESP32  
+#ifdef ESP32  
   void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     if (status != ESP_NOW_SEND_SUCCESS) {
 #else
@@ -199,7 +199,7 @@ public:
 #endif
 #if DEBUG_BRIDGE
       Serial.print("\n>> Last Packet Send Status: ");
-#if ESP32
+#ifdef ESP32
       Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
 #else
       Serial.println(status == 0 ? "Success" : "Fail");
@@ -209,7 +209,7 @@ public:
   }
 
   // Callback when data is received
-#if ESP32  
+#ifdef ESP32  
   void handleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
 #else
   void handleData(const uint8_t *peerInfo, const uint8_t *data, uint8_t len) {
@@ -283,7 +283,7 @@ public:
 
 
   // Static callback function that ESP-NOW can work with
-#if ESP32  
+#ifdef ESP32  
   static void staticHandleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
 #else
   static void staticHandleData(uint8_t *peerInfo, uint8_t *data, uint8_t len) {
@@ -295,7 +295,7 @@ public:
   }
 
   // Static callback function for send status
-#if ESP32  
+#ifdef ESP32  
   static void staticOnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 #else
   static void staticOnDataSent(uint8_t *mac_addr, uint8_t status) {
