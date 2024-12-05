@@ -95,7 +95,7 @@
 // FASTEST, BUT only over WIFI AND you cannot receive serial data, only send
 // Only GPIO3 (usually named as RX, RDX0)
 //  this method requires that we initialize serial before the strip
-#if INCLUDE_WIFI
+#if CONNECTION_TYPE != SERIAL
 // #define method NeoEsp8266DmaWs2812xMethod
 #endif
 
@@ -144,7 +144,7 @@ NeoPixelBusLg<colorSpec, method, NeoGammaTableMethod> neoLedStrip(LED_COUNT, DAT
  */
 void neoPixelBusBegin()
 {
-#if ESP8266 && INCLUDE_WIFI
+#if ESP8266 && CONNECTION_TYPE != SERIAL
 const std::type_info &classType = typeid(method);
 const char *className = classType.name();
 const char *prefix = "NeoEsp8266Dma";

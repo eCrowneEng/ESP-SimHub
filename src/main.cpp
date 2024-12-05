@@ -3,7 +3,7 @@
 
 
 /**
- * Enable ESP-NOW or WiFi or None for Serial
+ * Enable ESP-NOW or WiFi or use Serial
  */
 #define CONNECTION_TYPE SERIAL // or WIFI or ESP_NOW
 
@@ -16,7 +16,7 @@
  * ESP-NOW configuration
  */
 #if CONNECTION_TYPE == ESP_NOW
-// MAC Address of esp connected to the computer directly
+// MAC Address of esp connected to the computer directly, not this device
 #define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x90, 0x7A, 0x00}
 #endif // end CONNECTION_TYPE == ESP_NOW
 

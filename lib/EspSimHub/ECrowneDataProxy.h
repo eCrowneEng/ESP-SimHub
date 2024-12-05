@@ -1,6 +1,6 @@
 #include <FullLoopbackStream.h>
 
-#if INCLUDE_WIFI
+#if CONNECTION_TYPE == WIFI
 #include <TcpSerialBridge2.h>
 TcpSerialBridge2 instance(BRIDGE_PORT);
 #else
