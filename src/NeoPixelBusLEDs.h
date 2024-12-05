@@ -58,7 +58,7 @@
 // Supports all pins below GPIO34
 //******
 #if ( !CONFIG_IDF_TARGET_ESP32S3 ) // https://github.com/Makuna/NeoPixelBus/issues/815 (temporary)
-// #define method NeoEsp32Rmt0Ws2812xMethod
+#define method NeoEsp32Rmt0Ws2812xMethod
 #endif
 
 //******
@@ -78,7 +78,7 @@
 // Uses a lot of CPU, and interrupts such as the ones ran for WiFi make it unstable.
 // Supports all pins below GPIO32
 //******
-#define method NeoEsp32BitBangWs2812xMethod
+//#define method NeoEsp32BitBangWs2812xMethod
 
 
 // Pick your GPIO pin based on the limitations of the selected method above
