@@ -14,7 +14,6 @@
 
 
 
-
 class ESPNowSerialBridge
 {
 public:
@@ -210,7 +209,8 @@ public:
 
   // Callback when data is received
 #ifdef ESP32  
-  void handleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
+//  void handleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
+  void handleData(const uint8_t *peerInfo, const uint8_t *data, uint8_t len) {
 #else
   void handleData(const uint8_t *peerInfo, const uint8_t *data, uint8_t len) {
 #endif
@@ -284,7 +284,8 @@ public:
 
   // Static callback function that ESP-NOW can work with
 #ifdef ESP32  
-  static void staticHandleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
+//  static void staticHandleData(const esp_now_recv_info_t *peerInfo, const uint8_t *data, int len) {
+  static void staticHandleData(const uint8_t *peerInfo, const uint8_t *data, int len) {
 #else
   static void staticHandleData(uint8_t *peerInfo, uint8_t *data, uint8_t len) {
 #endif
