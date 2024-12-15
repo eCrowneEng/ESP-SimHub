@@ -9,7 +9,7 @@
 
 #if CONNECTION_TYPE != SERIAL
 // Emits extra events to Serial that show network communication, set to false to save memory and make faster
-#define DEBUG_BRIDGE true
+#define DEBUG_BRIDGE false
 #endif
 
 /**
