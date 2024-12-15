@@ -5,7 +5,7 @@
 /**
  * Enable ESP-NOW or WiFi or use Serial
  */
-#define CONNECTION_TYPE WIFI // or WIFI or ESP_NOW
+#define CONNECTION_TYPE SERIAL // SERIAL or WIFI or ESP_NOW
 
 #if CONNECTION_TYPE != SERIAL
 // Emits extra events to Serial that show network communication, set to false to save memory and make faster

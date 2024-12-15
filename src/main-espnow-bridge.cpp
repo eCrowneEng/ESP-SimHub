@@ -18,7 +18,7 @@
  *  open the serial monitor.
  * If you're using an ESP8266, use the code at the very bottom of this file to print the MAC address.
  * 
- * Please notice that this device uses Serial communication. So using `#define DEBUG true` and outputting to Serial will break the connection.
+ * Please notice that this device uses Serial communication. So using `#define DEBUG true` and outputting to Serial will break connecting to SimHub.
  *  IF YOU NEED TO DEBUG WHILE ACTIVE, USE A DIFFERENT SERIAL PORT FOR THE DATA AND FOR DEBUGGING, which means you need to use a USB to Serial 
  *  adapter or another ESP reading those pins. I recommend using the device's USB/Serial port for debugging and Serial1 for the data, because
  *  when the device crashes, it outputs crash data to the Serial port, and you need to be able to read it.
@@ -43,14 +43,22 @@
 // The device which will receive the data
 #define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x95, 0xE4, 0xF0}
 
+
+/**
+ * It's unlikely that you need to change anything below here, they're here in case you need to tweak them.
+ */
 #define INITIAL_BAUD_RATE 19200       // 19200 is the default baud rate for SimHub
 #define ESPNOW_WIFI_CHANNEL 1         // You may need to change this, and if you do, update the channel in src/
 #define ESPNOW_WIFI_MODE WIFI_STA     // WiFi Mode
 #define ESPNOW_WIFI_IF   WIFI_IF_STA  // WiFi Interface
 
+
 /**
  * Nothing to configure below here
+ * 
+ * Feel free to read through the code and tweak if you need regardless.
  */
+
 
 const MacAddress peer_mac(ESPNOW_PEER_MAC);
 ESP_NOW_Serial_Class NowSerial(peer_mac, ESPNOW_WIFI_CHANNEL, ESPNOW_WIFI_IF);
@@ -62,6 +70,7 @@ unsigned long lastMessageTimeMillis = 0;
 unsigned long lastPingTimeMillis = 0;
 unsigned long maxTimeBetweenMessagesMillis = 5000;
 unsigned long maxTimeBetweenPingsMillis = 1000;
+
 
 void setup() {
 #if DEBUG
