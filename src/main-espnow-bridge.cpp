@@ -1,3 +1,4 @@
+#ifdef ESP32
 #include <ESP32_NOW_Serial.h>
 #include <MacAddress.h>
 #include <WiFi.h>
@@ -7,23 +8,36 @@
 
 /**
  * Configure the ESP-NOW bridge
+ * 
+ * This device will be connected to the computer running SimHub, and will forward the data to the feature device and back to the computer.
+ * 
+ * This device's peer is the feature device. It needs to know its MAC address to be able to send data to it.
+ * The feature device's peer is this device.
+ * 
+ * In order to see the MAC address of this device, upload the code below with `#define DEBUG true` and `#define DEBUG_SERIAL Serial` to your ESP32 and 
+ *  open the serial monitor.
+ * If you're using an ESP8266, use the code at the very bottom of this file to print the MAC address.
+ * 
+ * Please notice that this device uses Serial communication. So using `#define DEBUG true` and outputting to Serial will break the connection.
+ *  IF YOU NEED TO DEBUG WHILE ACTIVE, USE A DIFFERENT SERIAL PORT FOR THE DATA AND FOR DEBUGGING, which means you need to use a USB to Serial 
+ *  adapter or another ESP reading those pins. I recommend using the device's USB/Serial port for debugging and Serial1 for the data, because
+ *  when the device crashes, it outputs crash data to the Serial port, and you need to be able to read it.
  */
 
-#define DEBUG true
+#define DEBUG false
 // Where are we reading the SimHub data from?
-// Serial = the usb connector available on the board; Serial1 = external USB to Serial adapter connected to the board wires
-#define DATA_SERIAL Serial1
-#define DATA_UART_RX 17 // RX, or the pin number on the board (17 maybe), connected to TX on the other device
-#define DATA_UART_TX 18 // TX, or the pin number on the board (18 maybe), connected to RX on the other device
+// Serial = the usb connector available on the board; 
+// Serial1 = external USB to Serial adapter or separate ESP device connected to the board wires
+#define DATA_SERIAL Serial // Serial for the USB connector on the board; Serial1 for external serial communication
+#define DATA_UART_RX RX // RX for USB/Serial, or 17 or some other pin number on the board connected to TX on the other device for external serial communication
+#define DATA_UART_TX TX // TX for USB/Serial, or 18 or some other pin number on the board connected to RX on the other device for external serial communication
 
 #if DEBUG
-  // If debug is enabled, we will write to this Serial port, use a different one for the data
-  // Typically you would want to use Serial for debugging because ESP32 outputs crash data to it
-  // But that means that you can't use the "USB" connector in your board, you need an extra USB to Serial adapter, 
-  //  or another ESP reading serial from the wire (not through USB)
-  #define DEBUG_SERIAL Serial // or Serial1
-#else
-  #define DEBUG_SERIAL nullptr
+  // If debug is enabled, we will write to this Serial port
+  // If BOTH data and debug are using the same Serial port, you won't be able to connect to SimHub, but you can still see the MAC address
+  #define DEBUG_SERIAL Serial1 // or Serial or Serial1
+  #define DEBUG_UART_RX 17 // or RX or 17
+  #define DEBUG_UART_TX 18 // or TX or 18
 #endif
 
 // The device which will receive the data
@@ -51,7 +65,9 @@ unsigned long maxTimeBetweenPingsMillis = 1000;
 
 void setup() {
 #if DEBUG
-  DEBUG_SERIAL.begin(115200); // Debug serial at fixed baud rate
+if (DEBUG_SERIAL != Serial) {
+  DEBUG_SERIAL.begin(115200, SERIAL_8N1, DEBUG_UART_RX, DEBUG_UART_TX);
+}
 #endif
   DATA_SERIAL.begin(INITIAL_BAUD_RATE, SERIAL_8N1, DATA_UART_RX, DATA_UART_TX);
 
@@ -207,3 +223,24 @@ void loop() {
     lastPingTimeMillis = millis();
   }
 }
+#else
+#pragma message "ESP8266 for the bridge device is not supported"
+
+/**
+ * This code is here for reference, it's not used by the bridge device
+ *  Upload it to your ESP8266 to see the MAC address
+ */
+
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("ESP8266 MAC address:");
+}
+
+void loop() {
+    Serial.println(WiFi.macAddress());
+    delay(500);
+}
+#endif
