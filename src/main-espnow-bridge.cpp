@@ -3,7 +3,6 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <FullLoopbackStream.h>
-#include <ESPNowSerialBridge.h>
 #include <EspNowProtocol.h>
 
 /**
@@ -28,10 +27,10 @@
 #endif
 
 // The device which will receive the data
-#define PEER_MAC_ADDRESS {0x34, 0x85, 0x18, 0x95, 0xE4, 0xF0}
+#define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x95, 0xE4, 0xF0}
 
-#define INITIAL_BAUD_RATE 19200
-#define ESPNOW_WIFI_CHANNEL 1
+#define INITIAL_BAUD_RATE 19200       // 19200 is the default baud rate for SimHub
+#define ESPNOW_WIFI_CHANNEL 1         // You may need to change this, and if you do, update the channel in src/
 #define ESPNOW_WIFI_MODE WIFI_STA     // WiFi Mode
 #define ESPNOW_WIFI_IF   WIFI_IF_STA  // WiFi Interface
 
@@ -39,7 +38,7 @@
  * Nothing to configure below here
  */
 
-const MacAddress peer_mac(PEER_MAC_ADDRESS);
+const MacAddress peer_mac(ESPNOW_PEER_MAC);
 ESP_NOW_Serial_Class NowSerial(peer_mac, ESPNOW_WIFI_CHANNEL, ESPNOW_WIFI_IF);
 EspNowMessage incomingMessage;
 EspNowMessage outgoingMessage;
@@ -208,5 +207,3 @@ void loop() {
     lastPingTimeMillis = millis();
   }
 }
-
-

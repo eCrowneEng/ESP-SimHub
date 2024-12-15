@@ -18,6 +18,7 @@
 #if CONNECTION_TYPE == ESP_NOW
 // MAC Address of esp connected to the computer directly, not this device
 #define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x90, 0x7A, 0x00}
+#define ESPNOW_WIFI_CHANNEL 1
 #endif // end CONNECTION_TYPE == ESP_NOW
 
 

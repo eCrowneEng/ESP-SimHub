@@ -18,6 +18,7 @@ class ESPNowSerialBridge
 {
 public:
   uint8_t peerMac[6];
+  uint8_t channel;
   EspNowMessage outgoingMessage;
   EspNowMessage incomingMessage;
   EspNowMessage bridgeMessage;
@@ -25,8 +26,9 @@ public:
   esp_now_peer_info_t peerInfo;
 #endif
 
-  ESPNowSerialBridge(const uint8_t* peerMac) {
+  ESPNowSerialBridge(const uint8_t* peerMac, uint8_t channel) {
     memcpy(this->peerMac, peerMac, 6);
+    this->channel = channel;
   }
 
   void begin(unsigned long baud) {
@@ -88,7 +90,7 @@ public:
 #ifdef ESP32
     // Register peer
     memcpy(peerInfo.peer_addr, this->peerMac, 6);
-    peerInfo.channel = 1;  
+    peerInfo.channel = this->channel;
     peerInfo.encrypt = false;
 #else
     esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
@@ -101,7 +103,7 @@ public:
 #ifdef ESP32
     if (esp_now_add_peer(&peerInfo) != ESP_OK){
 #else
-    if (esp_now_add_peer(this->peerMac, ESP_NOW_ROLE_COMBO, 1, NULL, 0) != 0) {
+    if (esp_now_add_peer(this->peerMac, ESP_NOW_ROLE_COMBO, this->channel, NULL, 0) != 0) {
 #endif
       Serial.println("Failed to add peer");
       return;

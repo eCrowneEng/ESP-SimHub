@@ -6,7 +6,7 @@ TcpSerialBridge2 instance(BRIDGE_PORT);
 #else
 #include <ESPNowSerialBridge.h>
 uint8_t peerMac[] = ESPNOW_PEER_MAC;
-ESPNowSerialBridge instance(peerMac);
+ESPNowSerialBridge instance(peerMac, ESPNOW_WIFI_CHANNEL);
 #endif
 
 class ECrowneDataProxy {
