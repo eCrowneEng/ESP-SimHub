@@ -4,6 +4,15 @@
         "array": "cpp",
         "string": "cpp",
         "string_view": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "initializer_list": "cpp"
     }
 }

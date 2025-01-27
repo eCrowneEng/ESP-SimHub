@@ -9,12 +9,12 @@ typedef void(*SHButtonChanged) (int, byte);
 class SHButton {
 private:
 
-	FastDigitalPin button;
 	uint8_t buttonState;
-	int buttonLastState = -1;
+	byte buttonLastState = -1;
 	bool vccToPinWiring;
 	unsigned long buttonLastStateChanged;
 	byte id;
+	byte buttonPin;
 	SHButtonChanged shButtonChangedCallback;
 	int logicMode;
 
@@ -35,11 +35,11 @@ private:
 public:
 
 	void begin(byte buttonid, uint8_t buttonPin, SHButtonChanged changedcallback, bool vccToPinWiring, int logicMode) {
-		button.begin(buttonPin);
 		this->vccToPinWiring = vccToPinWiring;
 		this->logicMode = logicMode;
+		this->buttonPin = buttonPin;
 
-		if (buttonPin > 0) {
+		if (buttonPin >= 0) {
 			if (!vccToPinWiring) {
 				pinMode(buttonPin, INPUT_PULLUP);
 			}
@@ -48,7 +48,7 @@ public:
 			}
 		}
 		id = buttonid;
-		buttonLastState = getState(button.digitalRead());
+		buttonLastState = getState(digitalRead(buttonPin));
 		shButtonChangedCallback = changedcallback;
 		
 		if (buttonLastState)
@@ -60,7 +60,7 @@ public:
 	}
 
 	void read() {
-		buttonState = getState(button.digitalRead());
+		buttonState = getState(digitalRead(buttonPin));
 		if (buttonState != buttonLastState && buttonLastStateChanged - millis() > 50) {
 			shButtonChangedCallback(id, buttonState);
 			buttonLastState = buttonState;

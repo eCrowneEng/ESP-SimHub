@@ -2,7 +2,7 @@
 #define __SHGAMEPADAXIS_H__
 
 #include <Arduino.h>
-#include <Joystick.h>
+#include <ECrowneJoystick.h>
 
 class SHGamepadAxis {
 private:
@@ -13,7 +13,7 @@ private:
 	int minimumInputValue;
 	int maximumInputValue;
 	int samplingRate;
-	Joystick_* joystick;
+	ECrowneJoystick* joystick;
 	float  exponentialFactor;
 	float analogReadXXbit(uint8_t analogPin, uint8_t bits_of_precision)
 	{
@@ -32,7 +32,6 @@ private:
 	}
 
 	void setAxis(int axisIdx, int value) {
-		//Serial.println(value);
 		switch (axisIdx)
 		{
 		case 0:
@@ -60,7 +59,7 @@ public:
 		this->exponentialFactor = exponentialFactor;
 	}
 
-	void SetJoystick(Joystick_* joystick) {
+	void SetJoystick(ECrowneJoystick* joystick) {
 		this->joystick = joystick;
 		read();
 	}
@@ -72,7 +71,7 @@ public:
 			lastAxisValue = pot;
 
 			int mapped = map(pot, minimumInputValue, maximumInputValue, 0, 1024);
-			float mapped2 = min(1, max(0, (float)mapped / (float)1024));
+			float mapped2 = min((float)1, max((float)0, (float)mapped / (float)1024));
 
 			if (exponentialFactor != 1) {
 				mapped2 = pow(mapped2, 1.0 / (float)exponentialFactor);

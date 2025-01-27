@@ -53,7 +53,7 @@ FullLoopbackStream incomingStream;
 #endif // end CONNECTION_TYPE != SERIAL
 
 
-
+// Title of the device
 #define DEVICE_NAME "ESP-SimHub Device" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
 
 // Known working features:
@@ -98,29 +98,49 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
 
 
+
 // Gamepad support (NOT WORKING YET) =======================
-#ifdef ARDUINO_USB_MODE
-//#define INCLUDE_GAMEPAD                     //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
+#ifdef SOC_USB_OTG_SUPPORTED
+#pragma message "Supports usb mode"
+// Gamepad support is only available when using serial right now
+#if CONNECTION_TYPE == SERIAL
+
+/**
+ * Enable gamepad support here
+ */
+#define INCLUDE_GAMEPAD                       //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
+#define MANUFACTURER_NAME "ECrowne"
+#define PRODUCT_ID 0x00FF	// usb product id (default is a random one, change to your liking)
+#define VENDOR_ID 0x16D0	// usb vendor id, using MCS's id, which is the only seller of usb product ids, https://devicehunt.com/view/type/usb/vendor/16D0
+#endif 
+#else
+#pragma message "This board does not support usb mode"
 #endif
+
+/**
+ * Enable gamepad axis support here, requires INCLUDE_GAMEPAD to be enabled
+ */
 //#define INCLUDE_GAMEPADAXIS                 //{"Name":"INCLUDE_GAMEPADAXIS","Type":"autodefine","Condition":"[GAMEPAD_AXIS_01_ENABLED]>0 || [GAMEPAD_AXIS_02_ENABLED]>0 || [GAMEPAD_AXIS_03_ENABLED]>0"}
+
 
 #ifdef INCLUDE_GAMEPADAXIS
 #ifndef  INCLUDE_GAMEPAD
 #error Gamepad option must be enabled in order to use analog axis.
+#else
+#pragma message "Gamepad axis and gamepad enabled"
 #endif // ! INCLUDE_GAMEPAD
 #endif
 
 // USB mode verification
 #ifdef INCLUDE_GAMEPAD
 #if ARDUINO_USB_MODE == 1
-#error "Device USB is not in OTG mode"
+#error "Device USB is not in OTG mode; uncomment -D ARDUINO_USB_MODE=0 in platformio.ini"
+#else
+#pragma message "Correct usb mode"
 #endif
 #endif
 
 // END Gamepad support ===================
-
-
-
 
 
 
@@ -137,7 +157,7 @@ FullLoopbackStream incomingStream;
 
 // ----------------------------------------------------- HW SETTINGS, PLEASE REVIEW ALL -------------------------------------------
 
-#define ENABLE_MICRO_GAMEPAD 0           //{"Group":"GAMEPAD","Name":"ENABLE_MICRO_GAMEPAD","Title":"Enable arduino micro gamepad output for all the activated buttons/encoders","DefaultValue":"0","Type":"bool"}
+#define ENABLE_MICRO_GAMEPAD 1            //{"Group":"GAMEPAD","Name":"ENABLE_MICRO_GAMEPAD","Title":"Enable arduino micro gamepad output for all the activated buttons/encoders","DefaultValue":"0","Type":"bool"}
 #define MICRO_GAMEPAD_ENCODERPRESSTIME 50 //{"Name":"MICRO_GAMEPAD_ENCODERPRESSTIME","Title":"Define how long (in milliseconds) the encoder related button will be hold after an encoder movement","DefaultValue":"50","Type":"int","Condition":"ENABLE_MICRO_GAMEPAD>0","Max":100}
 
 // -------------------------------------------------------------------------------------------------------
@@ -527,7 +547,7 @@ SHPWMPin shCONSPIN(CONS_PIN);
 
 #ifdef INCLUDE_GAMEPAD
 
-#include "SHGamepadAxis.h"
+#include <SHGamepadAxis.h>
 
 #define GAMEPAD_AXIS_01_ENABLED 0           //{"Group":"Gamepad analog axis","Name":"GAMEPAD_AXIS_01_ENABLED","Title":"Throttle axis enabled","DefaultValue":"0","Type":"bool"}
 #define GAMEPAD_AXIS_01_PIN 0               //{"Name":"GAMEPAD_AXIS_01_PIN","Title":"Throttle axis analog pin","DefaultValue":"0","Type":"pin;Throttle input","Condition":"GAMEPAD_AXIS_01_ENABLED>0"}
@@ -572,7 +592,7 @@ SHGamepadAxis SHGAMEPADAXIS03(GAMEPAD_AXIS_03_PIN, 2, GAMEPAD_AXIS_03_MINVALUE, 
 #define ENABLED_BUTTONS_COUNT 0 //{"Group":"Additional Buttons","Name":"ENABLED_BUTTONS_COUNT","Title":"Additional buttons (directly connected to the arduino, 12 max) buttons count","DefaultValue":"0","Type":"int","Max":12}
 #ifdef  INCLUDE_BUTTONS
 
-#define BUTTON_PIN_1 3          //{"Name":"BUTTON_PIN_1","Title":"1'st Additional button digital pin","DefaultValue":"3","Type":"pin;Button 1","Condition":"ENABLED_BUTTONS_COUNT>=1"}
+#define BUTTON_PIN_1 0          //{"Name":"BUTTON_PIN_1","Title":"1'st Additional button digital pin","DefaultValue":"3","Type":"pin;Button 1","Condition":"ENABLED_BUTTONS_COUNT>=1"}
 #define BUTTON_WIRINGMODE_1 0   //{"Name":"BUTTON_WIRINGMODE_1","Title":"1'st Additional button wiring","DefaultValue":"0","Type":"list","Condition":"ENABLED_BUTTONS_COUNT>=1","ListValues":"0,Pin to GND;1,VCC to pin"}
 #define BUTTON_LOGICMODE_1 0    //{"Name":"BUTTON_LOGICMODE_1","Title":"1'st Additional button logic","DefaultValue":"0","Type":"list","Condition":"ENABLED_BUTTONS_COUNT>=1","ListValues":"0,Normal;1,Reversed"}
 
@@ -998,11 +1018,8 @@ void RS_6c595_SetChar(char c) {
 
 #ifdef INCLUDE_GAMEPAD
 
-//initialize an Joystick with 34 buttons;
-Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,
-	JOYSTICK_TYPE_JOYSTICK, 128, 0,
-	false, false, false, false, false, false,
-	false, GAMEPAD_AXIS_01_ENABLED, GAMEPAD_AXIS_02_ENABLED, GAMEPAD_AXIS_03_ENABLED, false);
+//initialize an Joystick
+ECrowneJoystick Joystick;
 
 #endif
 
@@ -1014,6 +1031,55 @@ SHCustomProtocol shCustomProtocol;
 #include "SHCommands.h"
 #include "SHCommandsGlcd.h"
 unsigned long lastMatrixRefresh = 0;
+
+
+#ifdef  INCLUDE_ENCODERS
+void InitEncoders() {
+	if (ENABLED_ENCODERS_COUNT > 0) encoder1.begin(ENCODER1_CLK_PIN, ENCODER1_DT_PIN, ENCODER1_BUTTON_PIN, ENCODER1_REVERSE_DIRECTION, ENCODER1_ENABLE_PULLUP, 1, ENCODER1_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 1) encoder2.begin(ENCODER2_CLK_PIN, ENCODER2_DT_PIN, ENCODER2_BUTTON_PIN, ENCODER2_REVERSE_DIRECTION, ENCODER2_ENABLE_PULLUP, 2, ENCODER2_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 2) encoder3.begin(ENCODER3_CLK_PIN, ENCODER3_DT_PIN, ENCODER3_BUTTON_PIN, ENCODER3_REVERSE_DIRECTION, ENCODER3_ENABLE_PULLUP, 3, ENCODER3_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 3) encoder4.begin(ENCODER4_CLK_PIN, ENCODER4_DT_PIN, ENCODER4_BUTTON_PIN, ENCODER4_REVERSE_DIRECTION, ENCODER4_ENABLE_PULLUP, 4, ENCODER4_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 4) encoder5.begin(ENCODER5_CLK_PIN, ENCODER5_DT_PIN, ENCODER5_BUTTON_PIN, ENCODER5_REVERSE_DIRECTION, ENCODER5_ENABLE_PULLUP, 5, ENCODER5_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 5) encoder6.begin(ENCODER6_CLK_PIN, ENCODER6_DT_PIN, ENCODER6_BUTTON_PIN, ENCODER6_REVERSE_DIRECTION, ENCODER6_ENABLE_PULLUP, 6, ENCODER6_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 6) encoder7.begin(ENCODER7_CLK_PIN, ENCODER7_DT_PIN, ENCODER7_BUTTON_PIN, ENCODER7_REVERSE_DIRECTION, ENCODER7_ENABLE_PULLUP, 7, ENCODER7_ENABLE_HALFSTEPS, EncoderPositionChanged);
+	if (ENABLED_ENCODERS_COUNT > 7) encoder8.begin(ENCODER8_CLK_PIN, ENCODER8_DT_PIN, ENCODER8_BUTTON_PIN, ENCODER8_REVERSE_DIRECTION, ENCODER8_ENABLE_PULLUP, 8, ENCODER8_ENABLE_HALFSTEPS, EncoderPositionChanged);
+}
+#endif
+
+#ifdef INCLUDE_GAMEPAD
+#ifdef INCLUDE_ENCODERS
+void UpdateGamepadEncodersState(bool sendState) {
+	int btnidx = TM1638_ENABLEDMODULES * 8 + ENABLED_BUTTONS_COUNT + ENABLED_BUTTONMATRIX * (BMATRIX_COLS * BMATRIX_ROWS);
+	unsigned long refTime = millis();
+	for (int i = 0; i < ENABLED_ENCODERS_COUNT; i++) {
+		uint8_t dir = SHRotaryEncoders[i]->getDirection(MICRO_GAMEPAD_ENCODERPRESSTIME, refTime);
+		Joystick.setButton(btnidx, dir == 0);
+		Joystick.setButton(btnidx + 1, dir == 1);
+		Joystick.setButton(btnidx + 2, SHRotaryEncoders[i]->getPressed());
+
+		btnidx += 3;
+	}
+
+	if (sendState)
+		Joystick.sendState();
+}
+#endif
+
+void UpdateGamepadState() {
+	int btnidx = 0;
+
+#ifdef INCLUDE_TM1638
+	for (int i = 0; i < TM1638_ENABLEDMODULES; i++) {
+		byte buttonsState = TM1638_screens[i]->Buttons;
+
+		for (int i = 0; i < 8; i++) {
+			Joystick.setButton(btnidx, buttonsState & (1 << i));
+			btnidx++;
+		}
+	}
+#endif
+}
+#endif
 
 
 void idle(bool critical) {
@@ -1158,7 +1224,7 @@ void setup()
 	FlowSerialBegin(19200);
 
 #ifdef INCLUDE_GAMEPAD
-	Joystick.begin(false);
+	Joystick.begin({ .vendorId = VENDOR_ID, .productId = PRODUCT_ID, .name = DEVICE_NAME, .manufacturer = MANUFACTURER_NAME});
 #endif
 
 #ifdef INCLUDE_TM1638
@@ -1341,60 +1407,6 @@ void setup()
 	neoPixelBusBegin();
 #endif
 }
-
-#ifdef  INCLUDE_ENCODERS
-void InitEncoders() {
-	if (ENABLED_ENCODERS_COUNT > 0) encoder1.begin(ENCODER1_CLK_PIN, ENCODER1_DT_PIN, ENCODER1_BUTTON_PIN, ENCODER1_REVERSE_DIRECTION, ENCODER1_ENABLE_PULLUP, 1, ENCODER1_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 1) encoder2.begin(ENCODER2_CLK_PIN, ENCODER2_DT_PIN, ENCODER2_BUTTON_PIN, ENCODER2_REVERSE_DIRECTION, ENCODER2_ENABLE_PULLUP, 2, ENCODER2_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 2) encoder3.begin(ENCODER3_CLK_PIN, ENCODER3_DT_PIN, ENCODER3_BUTTON_PIN, ENCODER3_REVERSE_DIRECTION, ENCODER3_ENABLE_PULLUP, 3, ENCODER3_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 3) encoder4.begin(ENCODER4_CLK_PIN, ENCODER4_DT_PIN, ENCODER4_BUTTON_PIN, ENCODER4_REVERSE_DIRECTION, ENCODER4_ENABLE_PULLUP, 4, ENCODER4_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 4) encoder5.begin(ENCODER5_CLK_PIN, ENCODER5_DT_PIN, ENCODER5_BUTTON_PIN, ENCODER5_REVERSE_DIRECTION, ENCODER5_ENABLE_PULLUP, 5, ENCODER5_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 5) encoder6.begin(ENCODER6_CLK_PIN, ENCODER6_DT_PIN, ENCODER6_BUTTON_PIN, ENCODER6_REVERSE_DIRECTION, ENCODER6_ENABLE_PULLUP, 6, ENCODER6_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 6) encoder7.begin(ENCODER7_CLK_PIN, ENCODER7_DT_PIN, ENCODER7_BUTTON_PIN, ENCODER7_REVERSE_DIRECTION, ENCODER7_ENABLE_PULLUP, 7, ENCODER7_ENABLE_HALFSTEPS, EncoderPositionChanged);
-	if (ENABLED_ENCODERS_COUNT > 7) encoder8.begin(ENCODER8_CLK_PIN, ENCODER8_DT_PIN, ENCODER8_BUTTON_PIN, ENCODER8_REVERSE_DIRECTION, ENCODER8_ENABLE_PULLUP, 8, ENCODER8_ENABLE_HALFSTEPS, EncoderPositionChanged);
-}
-#endif
-
-#ifdef INCLUDE_GAMEPAD
-void UpdateGamepadState() {
-	int btnidx = 0;
-
-#ifdef INCLUDE_TM1638
-	for (int i = 0; i < TM1638_ENABLEDMODULES; i++) {
-		byte buttonsState = TM1638_screens[i]->Buttons;
-
-		for (int i = 0; i < 8; i++) {
-			Joystick.setButton(btnidx, buttonsState & (1 << i));
-			btnidx++;
-		}
-	}
-#endif
-
-#ifdef INCLUDE_ENCODERS
-	UpdateGamepadEncodersState(false);
-#endif
-
-	Joystick.sendState();
-}
-
-#ifdef INCLUDE_ENCODERS
-void UpdateGamepadEncodersState(bool sendState) {
-	int btnidx = TM1638_ENABLEDMODULES * 8 + ENABLED_BUTTONS_COUNT + ENABLED_BUTTONMATRIX * (BMATRIX_COLS * BMATRIX_ROWS);
-	unsigned long refTime = millis();
-	for (int i = 0; i < ENABLED_ENCODERS_COUNT; i++) {
-		uint8_t dir = SHRotaryEncoders[i]->getDirection(MICRO_GAMEPAD_ENCODERPRESSTIME, refTime);
-		Joystick.setButton(btnidx, dir == 0);
-		Joystick.setButton(btnidx + 1, dir == 1);
-		Joystick.setButton(btnidx + 2, SHRotaryEncoders[i]->getPressed());
-
-		btnidx += 3;
-	}
-
-	if (sendState)
-		Joystick.sendState();
-}
-#endif
-#endif
 
 char loop_opt;
 char xactionc;
