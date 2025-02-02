@@ -77,6 +77,7 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_FUELGAUGE                   //{"Name":"INCLUDE_FUELGAUGE ","Type":"autodefine","Condition":"[ENABLE_FUELGAUGE]>0"}
 //#define INCLUDE_TEMPGAUGE                   //{"Name":"INCLUDE_TEMPGAUGE ","Type":"autodefine","Condition":"[ENABLE_TEMPGAUGE]>0"}
 //#define INCLUDE_CONSGAUGE                   //{"Name":"INCLUDE_CONSGAUGE ","Type":"autodefine","Condition":"[ENABLE_CONSGAUGE]>0"}
+// Gamepad support below \/ \/ \/
 
 // Untested features, please open a GitHub Issue, or post in the discord if you try them
 //
@@ -97,25 +98,33 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_DM163_MATRIX                //{"Name":"INCLUDE_DM163_MATRIX","Type":"autodefine","Condition":"[DM163_MATRIX_ENABLED]>0"}
 //#define INCLUDE_SUNFOUNDERSH104P_MATRIX     //{"Name":"INCLUDE_SUNFOUNDERSH104P_MATRIX","Type":"autodefine","Condition":"[SUNFOUNDERSH104P_MATRIX_ENABLED]>0"}
 
+// === end untested features ===
 
+/** *****************************************************************************
+ * 
+ * Gamepad support
+ * 
+ ********************************************************************************/
 
-// Gamepad support (NOT WORKING YET) =======================
-#ifdef SOC_USB_OTG_SUPPORTED
+#ifdef SOC_USB_OTG_SUPPORTED // check if the board supports usb mode
 #pragma message "Supports usb mode"
 // Gamepad support is only available when using serial right now
-#if CONNECTION_TYPE == SERIAL
+
+#if CONNECTION_TYPE == SERIAL // currently gamepad is only supported with a serial setup
 
 /**
  * Enable gamepad support here
  */
 #define INCLUDE_GAMEPAD                       //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
+
 #define MANUFACTURER_NAME "ECrowne"
 #define PRODUCT_ID 0x00FF	// usb product id (default is a random one, change to your liking)
 #define VENDOR_ID 0x16D0	// usb vendor id, using MCS's id, which is the only seller of usb product ids, https://devicehunt.com/view/type/usb/vendor/16D0
-#endif 
-#else
+
+#endif // end CONNECTION_TYPE == SERIAL
+#else // if the board does not support usb mode
 #pragma message "This board does not support usb mode"
-#endif
+#endif // end SOC_USB_OTG_SUPPORTED
 
 /**
  * Enable gamepad axis support here, requires INCLUDE_GAMEPAD to be enabled
@@ -133,7 +142,7 @@ FullLoopbackStream incomingStream;
 
 // USB mode verification
 #ifdef INCLUDE_GAMEPAD
-#if ARDUINO_USB_MODE == 1
+#if ARDUINO_USB_MODE == 1 // check if the board is in usb mode
 #error "Device USB is not in OTG mode; uncomment -D ARDUINO_USB_MODE=0 in platformio.ini"
 #else
 #pragma message "Correct usb mode"
@@ -141,6 +150,8 @@ FullLoopbackStream incomingStream;
 #endif
 
 // END Gamepad support ===================
+
+
 
 
 
