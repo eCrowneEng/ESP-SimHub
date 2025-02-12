@@ -1,7 +1,7 @@
-#include "USBHID.h"
 
 #if SOC_USB_OTG_SUPPORTED
 #if CONFIG_TINYUSB_HID_ENABLED
+#include "USBHID.h"
 
 #include <ECrowneJoystick.h>
 #include <Arduino.h>

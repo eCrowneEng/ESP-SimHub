@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "USBHID.h"
-
 #if SOC_USB_OTG_SUPPORTED
+#include "USBHID.h"
 #if CONFIG_TINYUSB_HID_ENABLED
 #define MAX_BUTTONS 128
 
