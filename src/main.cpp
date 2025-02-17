@@ -77,6 +77,7 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_FUELGAUGE                   //{"Name":"INCLUDE_FUELGAUGE ","Type":"autodefine","Condition":"[ENABLE_FUELGAUGE]>0"}
 //#define INCLUDE_TEMPGAUGE                   //{"Name":"INCLUDE_TEMPGAUGE ","Type":"autodefine","Condition":"[ENABLE_TEMPGAUGE]>0"}
 //#define INCLUDE_CONSGAUGE                   //{"Name":"INCLUDE_CONSGAUGE ","Type":"autodefine","Condition":"[ENABLE_CONSGAUGE]>0"}
+//#define INCLUDE_SHAKEITL298N                //{"Name":"INCLUDE_SHAKEITL298N","Type":"autodefine","Condition":"[L98NMOTORS_ENABLED]>0"}
 // Gamepad support below \/ \/ \/
 
 // Untested features, please open a GitHub Issue, or post in the discord if you try them
@@ -91,7 +92,6 @@ FullLoopbackStream incomingStream;
 //#define INCLUDE_6c595_GEAR_DISPLAY          //{"Name":"INCLUDE_6c595_GEAR_DISPLAY ","Type":"autodefine","Condition":"[ENABLE_6C595_GEAR_DISPLAY]>0"}
 //#define INCLUDE_SHAKEITADASHIELD            //{"Name":"INCLUDE_SHAKEITADASHIELD ","Type":"autodefine","Condition":"[ADAMOTORS_SHIELDSCOUNT]>0"}
 //#define INCLUDE_SHAKEITDKSHIELD             //{"Name":"INCLUDE_SHAKEITDKSHIELD ","Type":"autodefine","Condition":"[DKMOTOR_SHIELDSCOUNT]>0"}
-//#define INCLUDE_SHAKEITL298N                //{"Name":"INCLUDE_SHAKEITL298N","Type":"autodefine","Condition":"[L98NMOTORS_ENABLED]>0"}
 //#define INCLUDE_SHAKEITMOTOMONSTER          //{"Name":"INCLUDE_SHAKEITMOTOMONSTER","Type":"autodefine","Condition":"[MOTOMONSTER_ENABLED]>0"}
 //#define INCLUDE_SHAKEIDUALVNH5019           //{"Name":"INCLUDE_SHAKEIDUALVNH5019","Type":"autodefine","Condition":"[DUALVNH5019_ENABLED]>0"}
 //#define INCLUDE_ENCODERS                    //{"Name":"INCLUDE_ENCODERS","Type":"autodefine","Condition":"[ENABLED_ENCODERS_COUNT]>0","IsInput":true}
