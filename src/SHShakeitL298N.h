@@ -50,20 +50,10 @@ public:
 protected:
 	void setMotorOutput(uint8_t motorIdx, uint8_t value) {
 		if (motorIdx == 0) {
-			if (value == 0) {
-				digitalWrite(pinL98N_enA, LOW);
-			}
-			else {
-				analogWrite(pinL98N_enA, value);
-			}
+			analogWrite(pinL98N_enA, value);
 		}
 		else {
-			if (value == 0) {
-				digitalWrite(pinL98N_enB, LOW);
-			}
-			else {
-				analogWrite(pinL98N_enB, value);
-			}
+			analogWrite(pinL98N_enB, value);
 		}
 	}
 };
