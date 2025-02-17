@@ -34,26 +34,7 @@ Set the [preprocessor directive](https://cplusplus.com/doc/tutorial/preprocessor
 Switch the environment to `env:espnow-bridge`, configure the code in `src/main-espnow.cpp`, set the MAC address of the ESP that has all the features (not this one) in `#define ESPNOW_PEER_MAC {0x34, 0x85, 0x18, 0x90, 0x7A, 0x01}` (in src/main-espnow.cpp) for a device with MAC address `34:85:18:90:7A:01`, and upload it to the ESP that will remain connected to the computer.
 
 ## How to configure the firmware to use WiFi
-Set the [preprocessor directive](https://cplusplus.com/doc/tutorial/preprocessor/) called CONNECTION_TYPE to WIFI `#define CONNECTION_TYPE WIFI` (in src/main.cpp). Set DEBUG_BRIDGE to true as well, and set `monitor_speed = 115200` in `platformio.ini`.
+[Using WiFi with SimHub and ESP32, ESP8266](http://ecrowne.com/esp-simhub/wifi)
 
-## How to connect the ESP to your WiFi
-Upload a [WiFi enabled](https://github.com/eCrowneEng/ESP-SimHub/blob/main/src/main.cpp#L4) firmware. Connect USB to computer and open the serial monitor with `115200` baud rate (to catch debug messages). Power the ESP up. 
-
-(If you hardcoded WiFi credentials already, skip this paragraph) It will itself create a new WiFi network (ESP-{a bunch of letters and numbers}) that you can connect to from your phone or computer. Connect to that network and navigate to `http://192.168.4.1`, observe a [captive portal](https://en.wikipedia.org/wiki/Captive_portal). Configure your WiFi and then disconnect.
-
-Once the ESP is connected to a network, it won't create its own. The device should output the IP address it's using, write it down, you'll need it.
-
-If you have access to your router settings, it's worth setting a static ip address or a DHCP reservation to the ESP.. that way you won't have to reconfigure the virtual port every few reconnections.
-
-## How to configure the virtual port
-Download [Perle TruePort](https://www.perle.com/downloads/trueport.shtml). Install it. Configure a new COM port. Forward the data to the IP address of your ESP. [Check the manual on the section called "Configuring the COM Port Connection" > "Access Device Server Serial Port"](https://www.perle.com/downloads/drivers/trueport/windows/windows_ug.pdf) Follow the instructions to set it up in LITE mode. .. and that should be it.
-
-## How to configure SimHub to use the virtual port
-SimHub should see the virtual port as a normal COM port, and it should be able to "scan it" and do the normal handshake process to query and use it. After confirming everything works, you can upload a new ESP firmware without debug logging.
-
-## ESP32 Support Caveats
-Some Arduino APIs for the ESP32 are different, so not everything will work out of the box, but I got the WiFi bridge working and the ShakeIt fans with some effort, as you need to use different includes etc. It's very likely that other features that I haven't tested will need tweaks. But if you're willing to experiment with this, feel free to do so. Checkout this PR https://github.com/eCrowneEng/ESP-SimHub/pull/1 as an example of the things you need to do to achieve compatibility.
-
-### How to enable ESP32
-- Open `platformio.ini`, comment out the ESP8266 env and Uncomment the ESP32 env. Also specify your board in the env, by default is set to something like `esp32doit-devkit-v1` because I owned this board, but there are tons of boards for the ESP32, as you can see [here](https://docs.platformio.org/en/latest/boards/index.html#espressif-32). Click on one and it will show you what's its id. 
-- Make sure to use the correct pin numbers for the ESP32 as opposed to aliases such as D1, D2, D3.. etc
+## How to switch environments for ESP8266 or ESP32 and configure boards
+[How to configure ESP32 and ESP8266 in Platformio, and how to switch between them](http://ecrowne.com/esp-simhub/board-configuration)
