@@ -115,7 +115,7 @@ FullLoopbackStream incomingStream;
 /**
  * Enable gamepad support here
  */
-#define INCLUDE_GAMEPAD                       //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
+// #define INCLUDE_GAMEPAD                       //{"Name":"INCLUDE_GAMEPAD","Type":"autodefine","Condition":"[ENABLE_MICRO_GAMEPAD]>0"}
 
 #define MANUFACTURER_NAME "ECrowne"
 #define PRODUCT_ID 0x00FF	// usb product id (default is a random one, change to your liking)
