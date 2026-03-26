@@ -13,8 +13,9 @@ output framing, ESP-NOW wireless framing, and the TCP/WiFi bridge.
    - [Packet Structure](#21-packet-structure)
    - [CRC-8 Checksum](#22-crc-8-checksum)
    - [Packet Sequencing](#23-packet-sequencing)
-   - [Acknowledgements](#24-acknowledgements)
-   - [Timeouts](#25-timeouts)
+   - [Null Padding](#24-null-padding)
+   - [Acknowledgements](#25-acknowledgements)
+   - [Timeouts](#26-timeouts)
 3. [Application Layer — SimHub Commands](#3-application-layer--simhub-commands)
    - [Command Frame Format](#31-command-frame-format)
    - [Command Reference](#32-command-reference)
@@ -80,7 +81,7 @@ Every packet sent **from SimHub to the device** has this layout:
 | Data        | 1–32 B  | Payload — one or more SimHub command bytes.                    |
 | CRC8        | 1 byte  | Checksum over Packet ID + Length + all Data bytes.             |
 
-**Example — Hello command (`0x03 0x31 0x10`):**
+**Example — Hello command:**
 
 ```
 01 01 FF 03 03 31 10 6A
@@ -89,10 +90,24 @@ Every packet sent **from SimHub to the device** has this layout:
 ```
 
 - Header: `01 01`
-- Packet ID: `FF` (broadcast)
+- Packet ID: `FF` (broadcast — Hello is always sent as broadcast)
 - Length: `03` (3 data bytes)
-- Data: `03 31 10` → header byte `0x03`, command `'1'` (`0x31`), end byte `0x10`
+- Data: `03 31 10` → `MESSAGE_HEADER` `0x03`, command `'1'` (`0x31`), extra byte `0x10` consumed and discarded by `Command_Hello`
 - CRC8: `6A`
+
+**Verified init-sequence packets** (from captured traces):
+
+| Command              | Full packet bytes               | ID   | Data          | CRC  |
+|----------------------|---------------------------------|------|---------------|------|
+| Hello (`'1'`)        | `01 01 FF 03 03 31 10 6A`       | `FF` | `03 31 10`    | `6A` |
+| Features (`'0'`)     | `01 01 00 02 03 30 38`          | `00` | `03 30`       | `38` |
+| RGB LED Count (`'4'`)| `01 01 01 02 03 34 83`          | `01` | `03 34`       | `83` |
+| TM1638 Count (`'2'`) | `01 01 02 02 03 32 CD`          | `02` | `03 32`       | `CD` |
+| Simple Modules (`'B'`)| `01 01 03 02 03 42 E3`         | `03` | `03 42`       | `E3` |
+| X list               | `01 01 04 09 03 03 03 58 6C 69 73 74 0A 51` | `04` | `03 03 03 58 6C 69 73 74 0A` | `51` |
+
+> Note: Most simple commands carry 2 data bytes (`MESSAGE_HEADER` + command char). Hello is
+> the exception with 3 bytes — the extra `0x10` is read by `Command_Hello` and discarded.
 
 ### 2.2 CRC-8 Checksum
 
@@ -128,7 +143,16 @@ A received packet is accepted when:
 If neither condition is met the packet is silently discarded (but an ACK is still sent to
 keep SimHub's retransmit logic happy).
 
-### 2.4 Acknowledgements
+Observed init sequence from captured traces: `FF` → `00` → `01` → `02` → `03` → `04` → …
+
+### 2.4 Null Padding
+
+In the raw byte stream (particularly over ESP-NOW) null bytes (`0x00`) may appear between
+ARQ packets because ESP-NOW transmits fixed-size buffers; unused trailing bytes are zeroed.
+The ARQ receiver safely ignores any byte that is not `0x01` when looking for the header,
+so these zeros are silently skipped.
+
+### 2.5 Acknowledgements
 
 After every received packet the device sends one of two responses directly on the serial
 stream (outside ARQ framing):
@@ -155,7 +179,7 @@ Reason codes:
 | `0x04` | CRC mismatch                       |
 | `0x05` | Data byte(s) missing / unreadable  |
 
-### 2.5 Timeouts
+### 2.6 Timeouts
 
 | Timeout          | Value   | Scope                                   |
 |------------------|---------|-----------------------------------------|
@@ -179,6 +203,16 @@ MESSAGE_HEADER  Command  [Optional data bytes...]
 
 The device's main loop checks for `MESSAGE_HEADER` (`0x03`), reads the next byte as the
 command character, then dispatches to the appropriate handler.
+
+**Multiple commands per ARQ packet.** An ARQ payload can contain more than one command
+frame. The device loops over the DataBuffer consuming command frames one at a time until
+the buffer is empty.
+
+**Unrecognised command bytes are silently discarded.** If the byte following `MESSAGE_HEADER`
+does not match any `case` in the switch statement the device simply continues to the next
+iteration. This is observable in the X command packet (see §3.3) where the payload starts
+with a `03 03` pair (header + `0x03` command, which has no handler) followed by the real
+command frame.
 
 ### 3.2 Command Reference
 
@@ -214,6 +248,18 @@ from the stream and dispatches on it:
 ```
 0x03  'X'  <subcommand string>  ' ' or '\n'
 ```
+
+In practice SimHub packs the X command inside a 9-byte ARQ payload that begins with an
+extra `03 03` no-op pair before the real command frame:
+
+```
+ARQ data: 03 03 03 58 6C 69 73 74 0A
+          └──┘  └──┘  └──────────┘ └─ '\n' terminator
+         no-op   'X'   "list"
+```
+
+The `03 03` bytes are processed first (header + unrecognised command `0x03`, discarded),
+then `03 58` dispatches `'X'` with subcommand `"list\n"`.
 
 | Sub-command string  | Handler                    | Response                                    |
 |---------------------|----------------------------|---------------------------------------------|
@@ -257,7 +303,14 @@ All data sent back to SimHub is prefixed with a type marker byte. These frames a
 0x08  <byte>
 ```
 
-Used for 1-byte responses such as counts or ACK values.
+Used for single-byte responses: counts, version character, ACK values. Examples from
+captured traces:
+
+| Response          | Bytes     | Meaning                              |
+|-------------------|-----------|--------------------------------------|
+| Hello version     | `08 6A`   | Firmware version `'j'` (0x6A)        |
+| RGB LED count     | `08 00`   | 0 RGB LEDs configured                |
+| Command ACK       | `08 03`   | `Command_Acq` response (`0x03`)      |
 
 ### 4.2 String (with optional newline)
 
@@ -267,11 +320,13 @@ Used for 1-byte responses such as counts or ACK values.
 
 - `length` includes the `\n` byte when `PrintLn` variants are used.
 - `0x20` (space) is the frame terminator.
+- Each call to `FlowSerialPrint()` / `FlowSerialPrintLn()` produces exactly one frame.
+  Multi-character strings are sent as one frame; single characters produce a 4-byte frame.
 
-Example — sending `"j"` (firmware version):
+Example — one feature code `'G'` (0x47):
 
 ```
-06 01 6A 20
+06 01 47 20
 ```
 
 ### 4.3 Debug Message
@@ -364,28 +419,46 @@ Sent when a TM1638 module button changes state:
 
 ## 6. Feature String
 
-In response to command `'0'`, the device sends a concatenated string of single-character
-capability codes followed by `\n`:
+In response to command `'0'`, the device sends each feature code as a **separate** string
+frame (`0x06` marker), one character per frame. The sequence is terminated by a final
+frame containing only `'\n'`. There is no single combined frame for the whole string.
+
+Each frame follows the standard string format:
 
 ```
-0x06  <length>  <feature chars...>  '\n'  0x20
+0x06  0x01  <feature char>  0x20
 ```
 
-| Code | Feature                                          | Condition                             |
-|------|--------------------------------------------------|---------------------------------------|
-| `M`  | LED matrix                                       | MAX7221/HT16K33 matrix enabled        |
-| `L`  | I²C LCD                                          | `I2CLCD_enabled == 1`                 |
-| `K`  | OLED or Nokia LCD                                | OLED or Nokia LCD count > 0           |
-| `G`  | Gear display                                     | Always sent                           |
-| `N`  | Named device (`Command_DeviceName` supported)    | Always sent                           |
-| `I`  | Unique ID (`Command_UniqueId` supported)         | Always sent                           |
-| `J`  | Button count query supported                     | Always sent                           |
-| `P`  | Custom protocol supported                        | Always sent                           |
-| `X`  | Extended commands supported                      | Always sent                           |
-| `R`  | RGB matrix                                       | WS2812B/DM163/Sunfounder matrix > 0   |
-| `V`  | Vibration / motor (ShakeIt)                      | Any motor driver enabled              |
+**Observed response for a minimal device** (G, N, I, J, P, X features):
 
-Example response for a fully-featured device: `"MLKGNJPXRV\n"`.
+```
+06 01 47 20    → 'G'
+06 01 4E 20    → 'N'
+06 01 49 20    → 'I'
+06 01 4A 20    → 'J'
+06 01 50 20    → 'P'
+06 01 58 20    → 'X'
+06 01 0A 20    → '\n'  (terminator)
+```
+
+Feature codes and the conditions under which each is emitted:
+
+| Code  | Feature                                          | Condition                             |
+|-------|--------------------------------------------------|---------------------------------------|
+| `M`   | LED matrix                                       | MAX7221/HT16K33 matrix enabled        |
+| `L`   | I²C LCD                                          | `I2CLCD_enabled == 1`                 |
+| `K`   | OLED or Nokia LCD                                | OLED or Nokia LCD count > 0           |
+| `G`   | Gear display                                     | Always sent                           |
+| `N`   | Named device (`Command_DeviceName` supported)    | Always sent                           |
+| `I`   | Unique ID (`Command_UniqueId` supported)         | Always sent                           |
+| `J`   | Button count query supported                     | Always sent                           |
+| `P`   | Custom protocol supported                        | Always sent                           |
+| `X`   | Extended commands supported                      | Always sent                           |
+| `R`   | RGB matrix                                       | WS2812B/DM163/Sunfounder matrix > 0   |
+| `V`   | Vibration / motor (ShakeIt)                      | Any motor driver enabled              |
+
+The codes are emitted in source order: `M`, `L`, `K`, `G`, `N`, `I`, `J`, `P`, `X`,
+optionally `R`, optionally `V`, then `\n`.
 
 ---
 
@@ -424,26 +497,49 @@ The device applies a 200 ms delay before switching baud rates to allow the host 
 ```
 SimHub                                   Device
   |                                         |
-  |--[01 01 FF 03  03 31 10  6A]----------->|   ARQ packet: Hello cmd (0x03 '1' 0x10)
+  |--[01 01 FF 03  03 31 10  6A]----------->|   ARQ packet ID FF, data: 03 '1' 0x10
   |                                         |
-  |<--[03 FF]-------------------------------|   ACK for Packet ID FF
-  |<--[06 01 6A 20]-------------------------|   String frame: firmware version 'j'
+  |<--[03 FF]-------------------------------|   ACK: Packet ID FF accepted
+  |<--[08 6A]-------------------------------|   Single-byte: firmware version 'j' (0x6A)
   |                                         |
 ```
+
+The `0x10` in the ARQ data is consumed and discarded by `Command_Hello` before the
+version byte is sent.
 
 ### 8.2 Feature Query
 
 ```
 SimHub                                   Device
   |                                         |
-  |--[01 01 00 03  03 30 10  ??]----------->|   Cmd '0'
+  |--[01 01 00 02  03 30  38]-------------->|   ARQ packet ID 00, data: 03 '0', CRC 38
   |                                         |
-  |<--[03 00]-------------------------------|   ACK
-  |<--[06 0B 47 4E 4A 50 58 47 0A 20]------>|   Feature string "GNJPXG\n"
+  |<--[03 00]-------------------------------|   ACK: Packet ID 00 accepted
+  |<--[06 01 47 20]-------------------------|   'G'
+  |<--[06 01 4E 20]-------------------------|   'N'
+  |<--[06 01 49 20]-------------------------|   'I'
+  |<--[06 01 4A 20]-------------------------|   'J'
+  |<--[06 01 50 20]-------------------------|   'P'
+  |<--[06 01 58 20]-------------------------|   'X'
+  |<--[06 01 0A 20]-------------------------|   '\n' terminator
   |                                         |
 ```
 
-### 8.3 RGB LED Update
+Each feature code is a separate 4-byte string frame. No single combined frame is sent.
+
+### 8.3 RGB LED Count
+
+```
+SimHub                                   Device
+  |                                         |
+  |--[01 01 01 02  03 34  83]-------------->|   ARQ packet ID 01, data: 03 '4', CRC 83
+  |                                         |
+  |<--[03 01]-------------------------------|   ACK: Packet ID 01 accepted
+  |<--[08 00]-------------------------------|   Single-byte: 0 RGB LEDs
+  |                                         |
+```
+
+### 8.4 RGB LED Data Update
 
 ```
 SimHub                                   Device
@@ -451,11 +547,11 @@ SimHub                                   Device
   |--[ARQ: 03 '6' <RGB data>]-------------->|
   |                                         |
   |<--[03 <ID>]------------------------------|   ACK
-  |<--[08 15]--------------------------------|   Single-byte ACK 0x15
+  |<--[08 15]--------------------------------|   Single-byte ACK 0x15 (data processed)
   |                                         |
 ```
 
-### 8.4 Button Press (Device → Host)
+### 8.5 Button Press (Device → Host)
 
 ```
 SimHub                                   Device
@@ -465,16 +561,29 @@ SimHub                                   Device
   |                                         |
 ```
 
-### 8.5 NACK / Retransmit
+### 8.6 NACK / Retransmit
+
+The following NACK reason codes have been observed in captured traces:
+
+```
+04 FF 04    CRC mismatch on broadcast packet
+04 FF 05    Incomplete data on broadcast packet
+04 FF 03    Missing CRC byte on broadcast packet
+04 01 04    CRC mismatch on packet ID 01
+04 01 02    Bad length on packet ID 01
+04 01 05    Incomplete data on packet ID 01
+```
+
+Example retransmit sequence:
 
 ```
 SimHub                                   Device
   |                                         |
-  |--[01 01 01 03  03 31 10  FF]----------->|   Corrupted CRC
+  |--[01 01 01 02  03 34  FF]-------------->|   Bad CRC (should be 83)
   |                                         |
   |<--[04 00 04]----------------------------|   NACK: last valid=0x00, reason=0x04 (CRC)
   |                                         |
-  |--[01 01 01 03  03 31 10  6A]----------->|   Retransmit with correct CRC
+  |--[01 01 01 02  03 34  83]-------------->|   Retransmit with correct CRC
   |                                         |
   |<--[03 01]-------------------------------|   ACK
   |                                         |
