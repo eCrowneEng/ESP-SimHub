@@ -25,10 +25,15 @@ output framing, ESP-NOW wireless framing, and the TCP/WiFi bridge.
 5. [Custom Packets (Device-Initiated)](#5-custom-packets-device-initiated)
 6. [Feature String](#6-feature-string)
 7. [Baud Rate Codes](#7-baud-rate-codes)
-8. [Communication Flow Examples](#8-communication-flow-examples)
-9. [ESP-NOW Wireless Protocol](#9-esp-now-wireless-protocol)
-10. [TCP/WiFi Bridge](#10-tcpwifi-bridge)
-11. [Constants Summary](#11-constants-summary)
+8. [Session Lifecycle](#8-session-lifecycle)
+   - [Phase 1 — Hello](#81-phase-1--hello)
+   - [Phase 2 — Feature Enumeration](#82-phase-2--feature-enumeration)
+   - [Phase 3 — Baud Rate Negotiation](#83-phase-3--baud-rate-negotiation)
+   - [Phase 4 — Data Streaming](#84-phase-4--data-streaming)
+9. [Communication Flow Examples](#9-communication-flow-examples)
+10. [ESP-NOW Wireless Protocol](#10-esp-now-wireless-protocol)
+11. [TCP/WiFi Bridge](#11-tcpwifi-bridge)
+12. [Constants Summary](#12-constants-summary)
 
 ---
 
@@ -97,17 +102,27 @@ Every packet sent **from SimHub to the device** has this layout:
 
 **Verified init-sequence packets** (from captured traces):
 
-| Command              | Full packet bytes               | ID   | Data          | CRC  |
-|----------------------|---------------------------------|------|---------------|------|
-| Hello (`'1'`)        | `01 01 FF 03 03 31 10 6A`       | `FF` | `03 31 10`    | `6A` |
-| Features (`'0'`)     | `01 01 00 02 03 30 38`          | `00` | `03 30`       | `38` |
-| RGB LED Count (`'4'`)| `01 01 01 02 03 34 83`          | `01` | `03 34`       | `83` |
-| TM1638 Count (`'2'`) | `01 01 02 02 03 32 CD`          | `02` | `03 32`       | `CD` |
-| Simple Modules (`'B'`)| `01 01 03 02 03 42 E3`         | `03` | `03 42`       | `E3` |
-| X list               | `01 01 04 09 03 03 03 58 6C 69 73 74 0A 51` | `04` | `03 03 03 58 6C 69 73 74 0A` | `51` |
+| Command               | Full packet bytes                                            | ID   | Data                                  | CRC  |
+|-----------------------|--------------------------------------------------------------|------|---------------------------------------|------|
+| Hello (`'1'`)         | `01 01 FF 03 03 31 10 6A`                                    | `FF` | `03 31 10`                            | `6A` |
+| Features (`'0'`)      | `01 01 00 02 03 30 38`                                       | `00` | `03 30`                               | `38` |
+| RGB LED Count (`'4'`) | `01 01 01 02 03 34 83`                                       | `01` | `03 34`                               | `83` |
+| TM1638 Count (`'2'`)  | `01 01 02 02 03 32 CD`                                       | `02` | `03 32`                               | `CD` |
+| Simple Modules (`'B'`)| `01 01 03 02 03 42 E3`                                       | `03` | `03 42`                               | `E3` |
+| X list                | `01 01 04 09 03 03 03 58 6C 69 73 74 0A 51`                  | `04` | `03 03 03 58 6C 69 73 74 0A`          | `51` |
+| Device Name (`'N'`)   | `01 01 05 02 03 4E 7F`                                       | `05` | `03 4E`                               | `7F` |
+| Unique ID (`'I'`)     | `01 01 06 02 03 49 E4`                                       | `06` | `03 49`                               | `E4` |
+| Buttons Count (`'J'`) | `01 01 07 02 03 4A 0B`                                       | `07` | `03 4A`                               | `0B` |
+| X mcutype             | `01 01 08 0C 03 03 03 58 6D 63 75 74 79 70 65 0A 78`         | `08` | `03 03 03 58 6D 63 75 74 79 70 65 0A` | `78` |
+| Set Baud Rate (`'8'`) | `01 01 09 03 03 38 0B 6C`                                    | `09` | `03 38 0B`                            | `6C` |
+| Gear (`'G'`)          | `01 01 0A 03 03 47 20 97`                                    | `0A` | `03 47 20`                            | `97` |
+| X keepalive           | `01 01 0B 0C 03 58 6B 65 65 70 61 6C 69 76 65 0A 11`         | `0B` | `03 58 6B 65 65 70 61 6C 69 76 65 0A` | `11` |
 
-> Note: Most simple commands carry 2 data bytes (`MESSAGE_HEADER` + command char). Hello is
-> the exception with 3 bytes — the extra `0x10` is read by `Command_Hello` and discarded.
+Notes:
+- Most simple commands carry 2 data bytes (`MESSAGE_HEADER` + command char).
+- Hello carries 3 bytes — the extra `0x10` is consumed and discarded by `Command_Hello`.
+- Baud rate, Gear, and similar commands carry 3 bytes — the third byte is the data argument.
+- All X commands carry 12 bytes with the `03 03` no-op preamble (see §3.3).
 
 ### 2.2 CRC-8 Checksum
 
@@ -261,17 +276,23 @@ ARQ data: 03 03 03 58 6C 69 73 74 0A
 The `03 03` bytes are processed first (header + unrecognised command `0x03`, discarded),
 then `03 58` dispatches `'X'` with subcommand `"list\n"`.
 
-| Sub-command string  | Handler                    | Response                                    |
-|---------------------|----------------------------|---------------------------------------------|
-| `list`              | `Command_ExpandedCommandsList` | Newline-separated list of supported sub-commands |
-| `mcutype`           | `Command_MCUType`          | 3 raw bytes: `SIGNATURE_0 SIGNATURE_1 SIGNATURE_2` |
-| `tach`              | `Command_TachData`         | Tachometer data (if enabled)                |
-| `speedo`            | `Command_SpeedoData`       | Speedometer data (if enabled)               |
-| `boost`             | `Command_BoostData`        | Boost gauge data (if enabled)               |
-| `temp`              | `Command_TempData`         | Temperature gauge data (if enabled)         |
-| `fuel`              | `Command_FuelData`         | Fuel gauge data (if enabled)                |
-| `cons`              | `Command_ConsData`         | Consumption gauge data (if enabled)         |
-| `encoderscount`     | `Command_EncodersCount`    | 1-byte encoder count (if enabled)           |
+| Sub-command string  | Handler                    | Response                                    | Always in `X list`? |
+|---------------------|----------------------------|---------------------------------------------|---------------------|
+| `list`              | `Command_ExpandedCommandsList` | String frame per sub-command + `08 0A` end | — (meta command)  |
+| `mcutype`           | `Command_MCUType`          | `08 1E`, `08 98`, `08 01` (three single-byte frames) | Yes          |
+| `keepalive`         | *(no handler)*             | ACK only — connection heartbeat             | Yes                 |
+| `tach`              | `Command_TachData`         | Tachometer data (if enabled)                | If tachometer enabled |
+| `speedo`            | `Command_SpeedoData`       | Speedometer data (if enabled)               | If speedo enabled   |
+| `boost`             | `Command_BoostData`        | Boost gauge data (if enabled)               | If boost enabled    |
+| `temp`              | `Command_TempData`         | Temperature gauge data (if enabled)         | If temp enabled     |
+| `fuel`              | `Command_FuelData`         | Fuel gauge data (if enabled)                | If fuel enabled     |
+| `cons`              | `Command_ConsData`         | Consumption gauge data (if enabled)         | If cons enabled     |
+| `encoderscount`     | `Command_EncodersCount`    | 1-byte encoder count (if enabled)           | If encoders enabled |
+
+`keepalive` and `mcutype` are always emitted by `Command_ExpandedCommandsList` regardless
+of device configuration. `keepalive` has no handler in the device firmware — SimHub sends
+it continuously during the data streaming phase as a heartbeat; the device returns only
+the ARQ ACK.
 
 MCU signature bytes (emulating Arduino Mega ATmega2560):
 
@@ -490,9 +511,147 @@ The device applies a 200 ms delay before switching baud rates to allow the host 
 
 ---
 
-## 8. Communication Flow Examples
+## 8. Session Lifecycle
 
-### 8.1 Hello / Handshake
+Every time SimHub connects to a device it runs a fixed sequence of queries before it
+starts sending game data. The sequence has four phases, always in this order:
+
+---
+
+### 8.1 Phase 1 — Hello
+
+SimHub opens the connection by sending a Hello packet using the broadcast Packet ID
+(`0xFF`) so it is always accepted regardless of device state.
+
+```
+SimHub → 01 01 FF 03  03 31 10  6A      Hello ('1'), broadcast
+Device → 03 FF                           ACK
+Device → 08 6A                           Single byte: firmware version 'j'
+```
+
+SimHub retransmits Hello repeatedly (always with ID=`FF`) until it receives a clean ACK
+and version byte. NACKs during this phase (`04 FF 04`, `04 FF 05`, `04 FF 03`) are normal
+and occur when a packet is split across receive buffers.
+
+---
+
+### 8.2 Phase 2 — Feature Enumeration
+
+Once Hello succeeds SimHub runs a fixed sequence of queries, each on its own sequential
+Packet ID, to discover what the device supports and how many of each peripheral exist.
+The exact order observed in captured traces:
+
+| Packet ID | Command           | ARQ data bytes      | Query                     | Device response                                        |
+|-----------|-------------------|---------------------|---------------------------|--------------------------------------------------------|
+| `00`      | `'0'`             | `03 30`             | Supported features        | Feature chars, one `06 01 XX 20` frame each, then `06 01 0A 20` |
+| `01`      | `'4'`             | `03 34`             | RGB LED count             | `08 <count>`                                           |
+| `02`      | `'2'`             | `03 32`             | TM1638 module count       | `08 <count>`                                           |
+| `03`      | `'B'`             | `03 42`             | Simple 7-seg module count | `08 <count>`                                           |
+| `04`      | `'X' "list\n"`    | `03 03 03 58 6C 69 73 74 0A` | Extended command list | String frame per sub-command + `08 0A` terminator |
+| `05`      | `'N'`             | `03 4E`             | Device name               | `06 <len> <name> 20` then `06 01 0A 20`               |
+| `06`      | `'I'`             | `03 49`             | Unique ID (MAC address)   | `06 <len> <mac> 20` then `06 01 0A 20`                |
+| `07`      | `'J'`             | `03 4A`             | Total button count        | `08 <count>`                                           |
+| `08`      | `'X' "mcutype\n"` | `03 03 03 58 6D 63 75 74 79 70 65 0A` | MCU signature | `08 1E`, `08 98`, `08 01` (three separate frames) |
+
+If `'V'` (motors) is in the feature string, SimHub also sends `'V' 'C'` to query the motor
+count and provider names. Additional `'X'` sub-commands (`tach`, `speedo`, `boost`, `temp`,
+`fuel`, `cons`, `encoderscount`) are queried only if the device reported them in the
+`X list` response.
+
+**X list response format.** Each supported sub-command is sent as a string-with-newline
+frame, then terminated with a single-byte `'\n'`:
+
+```
+06 08 6D 63 75 74 79 70 65 0A 20    → "mcutype\n"   (always present)
+06 0A 6B 65 65 70 61 6C 69 76 65 0A 20  → "keepalive\n" (always present)
+08 0A                                → '\n' end-of-list marker
+```
+
+**MCU type response.** Three separate single-byte frames, one per signature byte:
+
+```
+08 1E    → SIGNATURE_0 (0x1E)
+08 98    → SIGNATURE_1 (0x98)
+08 01    → SIGNATURE_2 (0x01)
+```
+
+**Device name / Unique ID response.** The value is sent as a single string frame, then a
+separate `'\n'` frame:
+
+```
+06 <len> <value bytes> 20    → value string
+06 01 0A 20                  → '\n' terminator
+```
+
+---
+
+### 8.3 Phase 3 — Baud Rate Negotiation
+
+After enumeration SimHub sends the `'8'` command with its preferred baud rate code (see §7).
+The baud rate code is packed as a third byte directly in the ARQ payload:
+
+```
+ARQ data: 03 38 <code>
+          │  │   └─ baud rate code byte (e.g. 0x0B = 11 = 115200)
+          │  └─ '8' (0x38)
+          └─ MESSAGE_HEADER
+```
+
+Observed example (115200 baud, code 11 = `0x0B`):
+
+```
+SimHub → 01 01 09 03  03 38 0B  6C      Set baud rate to 115200
+Device → 03 09                           ACK
+```
+
+The device applies a 200 ms delay, then switches. SimHub follows on its side. All
+subsequent traffic runs at the new baud rate.
+
+> If SimHub is satisfied with 19200 (the default) this step is skipped entirely.
+
+---
+
+### 8.4 Phase 4 — Data Streaming
+
+Streaming starts immediately after baud rate negotiation. The first data packet observed
+is always `'G'` (gear), with the gear character packed inline:
+
+```
+ARQ data: 03 47 20
+          │  │  └─ gear char (0x20 = space = no gear selected)
+          │  └─ 'G'
+          └─ MESSAGE_HEADER
+```
+
+SimHub then sends `X keepalive` on every subsequent Packet ID indefinitely as a
+connection heartbeat. The device has no handler for `keepalive` — it simply returns,
+and the ARQ layer sends back the ACK. This is how SimHub detects connection loss.
+
+Interspersed with keepalives, SimHub sends data update commands whenever game state
+changes:
+
+| Command     | Peripheral updated         | Device reply    |
+|-------------|----------------------------|-----------------|
+| `'6'`       | RGB LEDs                   | `08 15`         |
+| `'R'`       | RGB matrix                 | `08 15`         |
+| `'P'`       | Custom protocol            | `08 15`         |
+| `'3'`       | TM1638 displays + LEDs     | *(none)*        |
+| `'S'`       | 7-segment displays         | *(none)*        |
+| `'G'`       | Gear indicator             | *(none)*        |
+| `'L'`       | I²C LCD                    | *(none)*        |
+| `'K'`       | OLED / Nokia LCD           | *(none)*        |
+| `'M'`       | LED matrix                 | *(none)*        |
+| `'V' 'S'`   | Motors / ShakeIt           | *(none)*        |
+| `X keepalive` | *(heartbeat)*            | ACK only        |
+
+During streaming the device may push unsolicited custom packets to SimHub whenever a
+button is pressed or an encoder is turned (see §5).
+
+---
+
+## 9. Communication Flow Examples
+
+### 9.1 Hello / Handshake
 
 ```
 SimHub                                   Device
@@ -507,7 +666,7 @@ SimHub                                   Device
 The `0x10` in the ARQ data is consumed and discarded by `Command_Hello` before the
 version byte is sent.
 
-### 8.2 Feature Query
+### 9.2 Feature Query
 
 ```
 SimHub                                   Device
@@ -527,7 +686,7 @@ SimHub                                   Device
 
 Each feature code is a separate 4-byte string frame. No single combined frame is sent.
 
-### 8.3 RGB LED Count
+### 9.3 RGB LED Count
 
 ```
 SimHub                                   Device
@@ -539,7 +698,7 @@ SimHub                                   Device
   |                                         |
 ```
 
-### 8.4 RGB LED Data Update
+### 9.4 RGB LED Data Update
 
 ```
 SimHub                                   Device
@@ -551,7 +710,7 @@ SimHub                                   Device
   |                                         |
 ```
 
-### 8.5 Button Press (Device → Host)
+### 9.5 Button Press (Device → Host)
 
 ```
 SimHub                                   Device
@@ -561,7 +720,7 @@ SimHub                                   Device
   |                                         |
 ```
 
-### 8.6 NACK / Retransmit
+### 9.6 NACK / Retransmit
 
 The following NACK reason codes have been observed in captured traces:
 
