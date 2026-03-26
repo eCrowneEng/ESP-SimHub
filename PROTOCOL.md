@@ -231,29 +231,29 @@ command frame.
 
 ### 3.2 Command Reference
 
-| Cmd | ASCII | Handler                   | Device Response                              |
-|-----|-------|---------------------------|----------------------------------------------|
-| `1` | `'1'` | `Command_Hello`           | Firmware version char (e.g. `'j'`)           |
-| `0` | `'0'` | `Command_Features`        | Feature string + `\n` (see §6)               |
-| `4` | `'4'` | `Command_RGBLEDSCount`    | 1-byte LED count                             |
-| `2` | `'2'` | `Command_TM1638Count`     | 1-byte TM1638 module count                   |
-| `B` | `'B'` | `Command_SimpleModulesCount` | 1-byte 7-segment module count            |
-| `A` | `'A'` | `Command_Acq`             | `0x03` (keep-alive ACK)                      |
-| `N` | `'N'` | `Command_DeviceName`      | Device name string + `\n`                    |
-| `I` | `'I'` | `Command_UniqueId`        | MAC address string + `\n`                    |
-| `J` | `'J'` | `Command_ButtonsCount`    | 1-byte total button count                    |
-| `X` | `'X'` | Extended command dispatch | See §3.3                                     |
-| `3` | `'3'` | `Command_TM1638Data`      | *(none — reads display data from stream)*    |
-| `V` | `'V'` | `Command_Motors`          | See §3.4                                     |
-| `S` | `'S'` | `Command_7SegmentsData`   | *(none — reads display data from stream)*    |
-| `6` | `'6'` | `Command_RGBLEDSData`     | `0x15` after processing                      |
-| `R` | `'R'` | `Command_RGBMatrixData`   | `0x15` after processing                      |
-| `M` | `'M'` | `Command_MatrixData`      | *(none)*                                     |
-| `G` | `'G'` | `Command_GearData`        | *(none — reads single gear char from stream)*|
-| `L` | `'L'` | `Command_I2CLCDData`      | *(none)*                                     |
-| `K` | `'K'` | `Command_GLCDData`        | *(none — OLED / Nokia LCD)*                  |
-| `P` | `'P'` | `Command_CustomProtocolData` | `0x15` after processing                  |
-| `8` | `'8'` | `Command_SetBaudrate`     | *(none — see §7)*                            |
+| Hex    | Char  | Handler                      | Device Response                                        |
+|--------|-------|------------------------------|--------------------------------------------------------|
+| `0x31` | `'1'` | `Command_Hello`              | `08 6A` — firmware version byte (e.g. `'j'`)           |
+| `0x30` | `'0'` | `Command_Features`           | One `06 01 XX 20` frame per feature code, then `06 01 0A 20` (see §6) |
+| `0x34` | `'4'` | `Command_RGBLEDSCount`       | `08 <count>`                                           |
+| `0x32` | `'2'` | `Command_TM1638Count`        | `08 <count>`                                           |
+| `0x42` | `'B'` | `Command_SimpleModulesCount` | `08 <count>`                                           |
+| `0x41` | `'A'` | `Command_Acq`                | `08 03` — keep-alive ACK byte                          |
+| `0x4E` | `'N'` | `Command_DeviceName`         | `06 <len> <name> 20` then `06 01 0A 20`                |
+| `0x49` | `'I'` | `Command_UniqueId`           | `06 <len> <mac> 20` then `06 01 0A 20`                 |
+| `0x4A` | `'J'` | `Command_ButtonsCount`       | `08 <count>`                                           |
+| `0x58` | `'X'` | Extended command dispatch    | See §3.3                                               |
+| `0x33` | `'3'` | `Command_TM1638Data`         | *(none — reads display data from stream)*              |
+| `0x56` | `'V'` | `Command_Motors`             | See §3.4                                               |
+| `0x53` | `'S'` | `Command_7SegmentsData`      | *(none — reads display data from stream)*              |
+| `0x36` | `'6'` | `Command_RGBLEDSData`        | `08 15` after processing                               |
+| `0x52` | `'R'` | `Command_RGBMatrixData`      | `08 15` after processing                               |
+| `0x4D` | `'M'` | `Command_MatrixData`         | *(none)*                                               |
+| `0x47` | `'G'` | `Command_GearData`           | *(none — gear char is 3rd byte of ARQ data)*           |
+| `0x4C` | `'L'` | `Command_I2CLCDData`         | *(none)*                                               |
+| `0x4B` | `'K'` | `Command_GLCDData`           | *(none — OLED / Nokia LCD)*                            |
+| `0x50` | `'P'` | `Command_CustomProtocolData` | `08 15` after processing                               |
+| `0x38` | `'8'` | `Command_SetBaudrate`        | *(none — baud rate code is 3rd byte of ARQ data, see §7)* |
 
 ### 3.3 Extended Commands (X)
 
