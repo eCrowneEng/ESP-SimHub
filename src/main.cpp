@@ -106,7 +106,7 @@ FullLoopbackStream incomingStream;
  * 
  ********************************************************************************/
 
-#ifdef SOC_USB_OTG_SUPPORTED // check if the board supports usb mode
+#if defined(SOC_USB_OTG_SUPPORTED) && defined(CONFIG_TINYUSB_HID_ENABLED) // check if the board supports usb otg and tinyusb hid
 #pragma message "Supports usb mode"
 // Gamepad support is only available when using serial right now
 
@@ -123,8 +123,8 @@ FullLoopbackStream incomingStream;
 
 #endif // end CONNECTION_TYPE == SERIAL
 #else // if the board does not support usb mode
-#pragma message "This board does not support usb mode"
-#endif // end SOC_USB_OTG_SUPPORTED
+#pragma message "This board does not support usb mode, or TinyUSB HID is not enabled (CONFIG_TINYUSB_HID_ENABLED)"
+#endif // end SOC_USB_OTG_SUPPORTED && CONFIG_TINYUSB_HID_ENABLED
 
 /**
  * Enable gamepad axis support here, requires INCLUDE_GAMEPAD to be enabled
