@@ -7,17 +7,21 @@
  * to verify that your firmware is behaving correctly without needing SimHub.
  *
  * Usage:
- *   node simulator.js <serialPort> [baudRate]
+ *   node simulator.js <serialPort> [initialBaud] [upgradeBaud]
  *
- *   serialPort  – e.g. /dev/ttyUSB0  or  COM3
- *   baudRate    – default 19200
+ *   serialPort   – e.g. /dev/ttyUSB0  or  COM3
+ *   initialBaud  – baud rate to open with, default 19200
+ *   upgradeBaud  – optional: negotiate a faster baud after enumeration
+ *                  e.g. 115200.  Supported values: 300 1200 2400 4800 9600
+ *                  14400 19200 28800 38400 57600 115200 230400 250000
+ *                  200000 500000 1000000 2000000
  *
  * What it does:
- *   Phase 1  – Hello (broadcast packet, expects version byte back)
- *   Phase 2  – Feature enumeration (features, counts, name, ID, …)
- *   Phase 3  – Extended command list  (X list, X mcutype)
- *   Phase 4  – Continuous keepalive heartbeats every 500 ms
- *              (press Ctrl-C to stop)
+ *   Phase 1   – Hello (broadcast packet, expects version byte back)
+ *   Phase 2   – Feature enumeration (features, counts, name, ID, …)
+ *   Phase 2b  – Baud rate upgrade (optional, skipped if upgradeBaud omitted)
+ *   Phase 3   – Continuous keepalive heartbeats every 500 ms
+ *               (press Ctrl-C to stop)
  *
  * Protocol reference: ../PROTOCOL.md
  */
@@ -29,14 +33,22 @@ const { SerialPort } = require('serialport');
 // ─────────────────────────────────────────────────────────────────────────────
 // CLI args
 // ─────────────────────────────────────────────────────────────────────────────
-const portPath = process.argv[2];
-const baudRate = parseInt(process.argv[3] || '19200', 10);
+const portPath   = process.argv[2];
+const baudRate   = parseInt(process.argv[3] || '19200', 10);
+const upgradeBaud = process.argv[4] ? parseInt(process.argv[4], 10) : null;
 
 if (!portPath) {
-  console.error('Usage: node simulator.js <serialPort> [baudRate]');
-  console.error('  e.g. node simulator.js /dev/ttyUSB0 19200');
+  console.error('Usage: node simulator.js <serialPort> [initialBaud] [upgradeBaud]');
+  console.error('  e.g. node simulator.js /dev/ttyUSB0 19200 115200');
   process.exit(1);
 }
+
+// Baud rate code table – mirrors SetBaudrate() in FlowSerialRead.h
+const BAUD_TO_CODE = {
+  300: 1, 1200: 2, 2400: 3, 4800: 4, 9600: 5, 14400: 6,
+  19200: 7, 28800: 8, 38400: 9, 57600: 10, 115200: 11,
+  230400: 12, 250000: 13, 1000000: 14, 2000000: 15, 200000: 16, 500000: 17,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CRC-8 table – exact copy from ArqSerial.h crc_table_crc8[]
@@ -522,6 +534,49 @@ async function phase2_enumerate() {
   return result;
 }
 
+async function phase2b_baudUpgrade(newBaud) {
+  log('INFO', 'PHASE-2B', '── Baud Rate Upgrade ───────────────────────────────');
+
+  const code = BAUD_TO_CODE[newBaud];
+  if (!code) {
+    const valid = Object.keys(BAUD_TO_CODE).join(', ');
+    log('WARN', 'PHASE-2B', `${newBaud} is not a supported baud rate – skipping upgrade`);
+    log('WARN', 'PHASE-2B', `Supported values: ${valid}`);
+    return false;
+  }
+
+  if (newBaud === baudRate) {
+    log('INFO', 'PHASE-2B', `Already at ${newBaud} baud – skipping upgrade`);
+    return false;
+  }
+
+  log('INFO', 'PHASE-2B', `Requesting upgrade from ${baudRate} → ${newBaud} baud (code ${code})…`);
+
+  // Payload: 0x03 '8' <baud code>
+  // The device reads the code via FlowSerialTimedRead(), delays 200 ms, then
+  // calls Serial.begin(newBaud).  No response bytes are sent.
+  const id = allocPacketId();
+  await sendPacket(id, buildPayload('8', Buffer.from([code])), `SetBaud(${newBaud})`);
+
+  // Wait for the device to apply the change (firmware delay is 200 ms;
+  // add 150 ms extra margin for slow devices).
+  log('INFO', 'PHASE-2B', 'Waiting 350 ms for device to switch baud rate…');
+  await new Promise(r => setTimeout(r, 350));
+
+  // Switch the host side to match.  port.update() changes baud without
+  // closing/reopening – both ends are now at the new rate.
+  log('INFO', 'PHASE-2B', `Updating host port to ${newBaud} baud…`);
+  await new Promise((resolve, reject) => {
+    port.update({ baudRate: newBaud }, err => {
+      if (err) reject(new Error(`port.update failed: ${err.message}`));
+      else resolve();
+    });
+  });
+
+  log('INFO', 'PHASE-2B', `Baud rate upgrade complete: ${newBaud} baud ✓`);
+  return true;
+}
+
 async function phase3_keepalive(enumResult) {
   log('INFO', 'PHASE-3', '── Streaming / Keepalive ───────────────────────────');
   log('INFO', 'PHASE-3', 'Sending initial gear command then repeating keepalives. Press Ctrl-C to stop.');
@@ -565,8 +620,9 @@ async function main() {
   log('INFO', 'MAIN', '═══════════════════════════════════════════════════════');
   log('INFO', 'MAIN', ' ESP-SimHub Host Simulator  (tests a real device)');
   log('INFO', 'MAIN', '═══════════════════════════════════════════════════════');
-  log('INFO', 'MAIN', `Port:      ${portPath}`);
-  log('INFO', 'MAIN', `Baud rate: ${baudRate}`);
+  log('INFO', 'MAIN', `Port:         ${portPath}`);
+  log('INFO', 'MAIN', `Initial baud: ${baudRate}`);
+  log('INFO', 'MAIN', `Upgrade baud: ${upgradeBaud ? String(upgradeBaud) : '(none)'}`);
   log('INFO', 'MAIN', '───────────────────────────────────────────────────────');
 
   await new Promise((resolve, reject) => {
@@ -592,6 +648,10 @@ async function main() {
   try {
     await phase1_hello();
     const enumResult = await phase2_enumerate();
+
+    if (upgradeBaud) {
+      await phase2b_baudUpgrade(upgradeBaud);
+    }
 
     log('INFO', 'SUMMARY', '───────────────────────────────────────────────────');
     log('INFO', 'SUMMARY', 'Enumeration complete:');
