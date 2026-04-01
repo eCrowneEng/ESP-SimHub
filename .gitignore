@@ -4,3 +4,4 @@
 .vscode/launch.json
 .vscode/ipch
 platformio_override.ini
+node_modules/
