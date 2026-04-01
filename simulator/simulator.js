@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 /**
- * ESP-SimHub Serial Device Simulator
+ * ESP-SimHub Host Simulator
  *
- * Simulates the full ARQ transport + SimHub application-layer handshake and
- * feature enumeration so you can verify the host (SimHub) side of the
- * protocol without a physical ESP device.
+ * Acts as the SimHub host side of the protocol, driving the full handshake
+ * and feature enumeration against a REAL ESP device over serial.  Use this
+ * to verify that your firmware is behaving correctly without needing SimHub.
  *
  * Usage:
- *   node simulator.js [serialPort] [baudRate]
+ *   node simulator.js <serialPort> [baudRate]
  *
- *   serialPort  – defaults to the first argument or /dev/ttyUSB0
- *   baudRate    – defaults to 19200
+ *   serialPort  – e.g. /dev/ttyUSB0  or  COM3
+ *   baudRate    – default 19200
  *
- * Virtual serial pair (Linux/macOS):
- *   socat -d -d pty,raw,echo=0 pty,raw,echo=0
- *   # socat will print two pty paths, e.g. /dev/pts/3 and /dev/pts/4
- *   # Point SimHub at one end and run this simulator against the other.
- *   node simulator.js /dev/pts/3
+ * What it does:
+ *   Phase 1  – Hello (broadcast packet, expects version byte back)
+ *   Phase 2  – Feature enumeration (features, counts, name, ID, …)
+ *   Phase 3  – Extended command list  (X list, X mcutype)
+ *   Phase 4  – Continuous keepalive heartbeats every 500 ms
+ *              (press Ctrl-C to stop)
  *
  * Protocol reference: ../PROTOCOL.md
  */
@@ -26,26 +27,19 @@
 const { SerialPort } = require('serialport');
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Configuration – tweak to match whatever features you want to advertise
+// CLI args
 // ─────────────────────────────────────────────────────────────────────────────
-const CONFIG = {
-  deviceName:    'ESP-SimHub-Sim',
-  uniqueId:      'AA:BB:CC:DD:EE:FF',
-  firmwareVersion: 0x6A,              // 'j' – same as real firmware
-  // MCU signature – pretends to be an Arduino Mega ATmega2560
-  mcuSignature:  [0x1E, 0x98, 0x01],
-  rgbLedCount:   8,
-  tm1638Count:   0,
-  simpleModules: 0,
-  buttonCount:   0,
-  // Feature flags advertised to SimHub (always include G N I J P X)
-  features: ['G', 'N', 'I', 'J', 'P', 'X'],
-  // Extended sub-commands advertised in the 'X list' response
-  extendedCommands: ['mcutype', 'keepalive'],
-};
+const portPath = process.argv[2];
+const baudRate = parseInt(process.argv[3] || '19200', 10);
+
+if (!portPath) {
+  console.error('Usage: node simulator.js <serialPort> [baudRate]');
+  console.error('  e.g. node simulator.js /dev/ttyUSB0 19200');
+  process.exit(1);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CRC-8 table (matches the firmware's crc_table_crc8 in ArqSerial.h)
+// CRC-8 table – exact copy from ArqSerial.h crc_table_crc8[]
 // ─────────────────────────────────────────────────────────────────────────────
 const CRC8_TABLE = Buffer.from([
     0,213,127,170,254, 43,129, 84, 41,252, 86,131,215,  2,168,125,
@@ -70,500 +64,558 @@ function crc8(packetId, length, data) {
   let crc = 0;
   crc = CRC8_TABLE[crc ^ packetId];
   crc = CRC8_TABLE[crc ^ length];
-  for (let i = 0; i < data.length; i++) {
-    crc = CRC8_TABLE[crc ^ data[i]];
-  }
+  for (const b of data) crc = CRC8_TABLE[crc ^ b];
   return crc;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Debug logging helpers
+// Logging
 // ─────────────────────────────────────────────────────────────────────────────
-const LOG_LEVEL = { TRACE: 0, DEBUG: 1, INFO: 2, WARN: 3, ERROR: 4 };
-const currentLogLevel = LOG_LEVEL.TRACE;
-
-function timestamp() {
-  return new Date().toISOString().replace('T', ' ').replace('Z', '');
-}
+function ts() { return new Date().toISOString().slice(11, 23); }
 
 function log(level, tag, msg) {
-  if (level >= currentLogLevel) {
-    const levelName = Object.keys(LOG_LEVEL).find(k => LOG_LEVEL[k] === level);
-    console.log(`[${timestamp()}] [${levelName.padEnd(5)}] [${tag.padEnd(8)}] ${msg}`);
-  }
+  console.log(`[${ts()}] ${level.padEnd(5)} [${tag.padEnd(10)}] ${msg}`);
 }
 
-function hexDump(buf, label) {
+function hexStr(buf) {
+  return [...buf].map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+}
+
+function asciiStr(buf) {
+  return [...buf].map(b => (b >= 0x20 && b < 0x7F) ? String.fromCharCode(b) : '.').join('');
+}
+
+function logHex(dir, label, buf) {
   if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
-  const hex = [...buf].map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-  const ascii = [...buf].map(b => (b >= 0x20 && b < 0x7F) ? String.fromCharCode(b) : '.').join('');
-  log(LOG_LEVEL.TRACE, 'HEX', `${label}: [${hex}]  "${ascii}"`);
+  log('TRACE', dir, `${label}: [${hexStr(buf)}]  "${asciiStr(buf)}"`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Output frame builders  (device → SimHub)
+// ARQ packet builder  (host → device)
+//   01 01 <packetId> <length> <data…> <crc8>
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** ACK: 03 <packetId> */
-function makeAck(packetId) {
-  return Buffer.from([0x03, packetId]);
-}
-
-/** NACK: 04 <lastValidId> <reason> */
-function makeNack(lastValidId, reason) {
-  return Buffer.from([0x04, lastValidId, reason]);
-}
-
-/** Single-byte output: 08 <byte> */
-function makeSingleByte(value) {
-  return Buffer.from([0x08, value & 0xFF]);
+function buildArqPacket(packetId, data) {
+  const length = data.length;
+  const checksum = crc8(packetId, length, data);
+  const pkt = Buffer.allocUnsafe(4 + length + 1);
+  pkt[0] = 0x01; pkt[1] = 0x01;
+  pkt[2] = packetId;
+  pkt[3] = length;
+  data.copy(pkt, 4);
+  pkt[4 + length] = checksum;
+  return pkt;
 }
 
 /**
- * String frame: 06 <length> <...bytes> 20
- * The firmware does NOT add a null terminator – length is the raw string length.
+ * Build a SimHub command payload.
+ * Application-layer format: 0x03 <cmdChar> [extra bytes…]
  */
-function makeStringFrame(str) {
-  const strBuf = Buffer.isBuffer(str) ? str : Buffer.from(str, 'latin1');
-  const frame = Buffer.allocUnsafe(3 + strBuf.length);
-  frame[0] = 0x06;
-  frame[1] = strBuf.length;
-  strBuf.copy(frame, 2);
-  frame[2 + strBuf.length] = 0x20;
-  return frame;
-}
-
-/**
- * String frame with trailing newline: 06 <length+1> <...bytes> 0A 20
- * Mirrors firmware PrintLn().
- */
-function makeStringFrameLn(str) {
-  return makeStringFrame(str + '\n');
-}
-
-/** Debug frame: 07 <length+1> <...bytes> 0A 20  (mirrors DebugPrintLn) */
-function makeDebugFrame(str) {
-  const strBuf = Buffer.from(str + '\n', 'latin1');
-  const frame = Buffer.allocUnsafe(3 + strBuf.length);
-  frame[0] = 0x07;
-  frame[1] = strBuf.length;
-  strBuf.copy(frame, 2);
-  frame[2 + strBuf.length] = 0x20;
-  return frame;
+function buildPayload(cmdChar, extra) {
+  const extraBuf = extra ? (Buffer.isBuffer(extra) ? extra : Buffer.from(extra)) : Buffer.alloc(0);
+  const buf = Buffer.allocUnsafe(2 + extraBuf.length);
+  buf[0] = 0x03;              // MESSAGE_HEADER
+  buf[1] = cmdChar.charCodeAt(0);
+  extraBuf.copy(buf, 2);
+  return buf;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Simulator state
+// Host-side sequence state
 // ─────────────────────────────────────────────────────────────────────────────
-const state = {
-  lastValidPacketId: 255,   // starts at 0xFF so first expected is 0x00
-  rxBuffer: Buffer.alloc(0),
-  sessionActive: false,
-  keepAliveCount: 0,
-  baudRate: 19200,
+let nextPacketId = 0;           // increments 0→127→0 for normal packets
+const BROADCAST_ID = 0xFF;
+
+function allocPacketId(broadcast = false) {
+  if (broadcast) return BROADCAST_ID;
+  const id = nextPacketId;
+  nextPacketId = nextPacketId >= 127 ? 0 : nextPacketId + 1;
+  return id;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Response decoder  (device → host)
+// We parse the device output frames off an rx ring buffer.
+// Frame types:
+//   0x03 <id>               ACK
+//   0x04 <lastId> <reason>  NACK
+//   0x08 <byte>             single-byte value
+//   0x06 <len> <…> 0x20    string frame
+//   0x07 <len> <…> 0x20    debug frame
+//   0x09 <type> <len> <…>  custom/device-initiated packet
+// ─────────────────────────────────────────────────────────────────────────────
+let rxBuf = Buffer.alloc(0);
+
+// Pending promise resolver set by waitForResponse()
+let pendingResolve = null;
+let pendingReject  = null;
+let pendingTimer   = null;
+const pendingFrames = [];   // decoded frames queued while no one is waiting
+
+const NACK_REASONS = {
+  0x01: 'bad packet ID',
+  0x02: 'bad length (0 or >32)',
+  0x03: 'missing CRC',
+  0x04: 'CRC mismatch',
+  0x05: 'missing data',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ARQ packet parser
-// ─────────────────────────────────────────────────────────────────────────────
+function tryDecodeFrames() {
+  const decoded = [];
 
-/** Expected next packet ID – wraps 0→127→0, and 0xFF is always valid (broadcast) */
-function expectedPacketId() {
-  if (state.lastValidPacketId > 127) return 0;
-  return (state.lastValidPacketId + 1) & 0xFF;
-}
+  while (rxBuf.length >= 2) {
+    const type = rxBuf[0];
 
-/**
- * Try to consume one complete ARQ packet from state.rxBuffer.
- * Returns { packetId, payload } on success, or null if more data is needed,
- * or throws a structured error object { reason, lastValid } on protocol error.
- */
-function tryParsePacket() {
-  const buf = state.rxBuffer;
-
-  // Minimum packet: header(2) + id(1) + length(1) + data(1) + crc(1) = 6 bytes
-  if (buf.length < 6) return null;
-
-  // Find 01 01 header
-  if (buf[0] !== 0x01 || buf[1] !== 0x01) {
-    // Discard bytes until we find the header or exhaust the buffer
-    let i = 1;
-    while (i < buf.length - 1 && !(buf[i] === 0x01 && buf[i + 1] === 0x01)) i++;
-    log(LOG_LEVEL.WARN, 'ARQ', `Discarding ${i} non-header byte(s): ${buf.slice(0, i).toString('hex')}`);
-    state.rxBuffer = buf.slice(i);
-    return null;
-  }
-
-  const packetId = buf[2];
-  const length   = buf[3];
-
-  // Validate length
-  if (length === 0 || length > 32) {
-    log(LOG_LEVEL.WARN, 'ARQ', `Bad length ${length} (must be 1-32), sending NACK reason 0x02`);
-    state.rxBuffer = buf.slice(4); // discard header+id+length
-    throw { reason: 0x02, lastValid: state.lastValidPacketId };
-  }
-
-  // Need header(2) + id(1) + length(1) + data(length) + crc(1)
-  const totalNeeded = 4 + length + 1;
-  if (buf.length < totalNeeded) return null; // wait for more data
-
-  const payload = buf.slice(4, 4 + length);
-  const receivedCrc = buf[4 + length];
-
-  // Validate CRC
-  const expectedCrc = crc8(packetId, length, payload);
-  if (receivedCrc !== expectedCrc) {
-    log(LOG_LEVEL.WARN, 'ARQ',
-      `CRC mismatch – got 0x${receivedCrc.toString(16).padStart(2,'0')}, ` +
-      `expected 0x${expectedCrc.toString(16).padStart(2,'0')} – sending NACK reason 0x04`);
-    state.rxBuffer = buf.slice(totalNeeded);
-    throw { reason: 0x04, lastValid: state.lastValidPacketId };
-  }
-
-  // Validate sequence number
-  const expected = expectedPacketId();
-  if (packetId !== 0xFF && packetId !== expected) {
-    log(LOG_LEVEL.WARN, 'ARQ',
-      `Out-of-sequence packet – got ${packetId}, expected ${expected} – sending NACK reason 0x01`);
-    state.rxBuffer = buf.slice(totalNeeded);
-    throw { reason: 0x01, lastValid: state.lastValidPacketId };
-  }
-
-  // All good – consume the bytes and update state
-  state.rxBuffer = buf.slice(totalNeeded);
-  state.lastValidPacketId = packetId;
-
-  hexDump(buf.slice(0, totalNeeded), `  ARQ IN  [id=0x${packetId.toString(16).padStart(2,'0')}]`);
-  return { packetId, payload };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Command handlers  (device-side responses)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Handlers return a Buffer (or array of Buffers) to write, or null for silence.
- * The payload passed in already has the 0x03 header stripped.
- *
- * Application layer data layout (inside the ARQ payload):
- *   payload[0]  = 0x03  MESSAGE_HEADER  (stripped before calling handlers)
- *   payload[1]  = command char
- *   payload[2+] = optional data bytes
- */
-
-function handleHello(extra) {
-  log(LOG_LEVEL.INFO, 'CMD', `Hello ('1') – responding with firmware version 0x${CONFIG.firmwareVersion.toString(16)}`);
-  // The firmware reads one more byte (the 0x10 end-of-line) via FlowSerialTimedRead()
-  // before replying.  That byte is already in `extra` if present – no issue.
-  return makeSingleByte(CONFIG.firmwareVersion);
-}
-
-function handleFeatures() {
-  log(LOG_LEVEL.INFO, 'CMD', `Features ('0') – advertising: ${CONFIG.features.join(', ')}`);
-  const frames = [];
-  for (const f of CONFIG.features) {
-    frames.push(makeStringFrame(f));
-    log(LOG_LEVEL.DEBUG, 'CMD', `  → feature '${f}'`);
-  }
-  // Terminator: newline character as a single-char string frame
-  frames.push(makeStringFrame('\n'));
-  log(LOG_LEVEL.DEBUG, 'CMD', `  → feature terminator '\\n'`);
-  return Buffer.concat(frames);
-}
-
-function handleRgbLedCount() {
-  log(LOG_LEVEL.INFO, 'CMD', `RGB LED count ('4') – reporting ${CONFIG.rgbLedCount}`);
-  return makeSingleByte(CONFIG.rgbLedCount);
-}
-
-function handleTm1638Count() {
-  log(LOG_LEVEL.INFO, 'CMD', `TM1638 count ('2') – reporting ${CONFIG.tm1638Count}`);
-  return makeSingleByte(CONFIG.tm1638Count);
-}
-
-function handleSimpleModulesCount() {
-  log(LOG_LEVEL.INFO, 'CMD', `Simple modules count ('B') – reporting ${CONFIG.simpleModules}`);
-  return makeSingleByte(CONFIG.simpleModules);
-}
-
-function handleDeviceName() {
-  log(LOG_LEVEL.INFO, 'CMD', `Device name ('N') – "${CONFIG.deviceName}"`);
-  return makeStringFrameLn(CONFIG.deviceName);
-}
-
-function handleUniqueId() {
-  log(LOG_LEVEL.INFO, 'CMD', `Unique ID ('I') – "${CONFIG.uniqueId}"`);
-  return makeStringFrameLn(CONFIG.uniqueId);
-}
-
-function handleButtonCount() {
-  log(LOG_LEVEL.INFO, 'CMD', `Button count ('J') – reporting ${CONFIG.buttonCount}`);
-  return makeSingleByte(CONFIG.buttonCount);
-}
-
-function handleSetBaudrate(extra) {
-  const code = extra[0];
-  const BAUD_MAP = {
-    1: 300, 2: 1200, 3: 2400, 4: 4800, 5: 9600, 6: 14400,
-    7: 19200, 8: 28800, 9: 38400, 10: 57600, 11: 115200,
-    12: 230400, 13: 250000, 14: 1000000, 15: 2000000, 16: 200000, 17: 500000,
-  };
-  const newBaud = BAUD_MAP[code];
-  if (newBaud) {
-    log(LOG_LEVEL.INFO, 'CMD', `Set baud rate ('8') – code ${code} → ${newBaud}`);
-    state.baudRate = newBaud;
-    // NOTE: a real device would call Serial.begin(newBaud) after a 200ms delay.
-    // The simulator stays at the current port baud – log and continue.
-    log(LOG_LEVEL.WARN, 'CMD', `  ⚠ Simulator does NOT actually change port baud rate.`);
-  } else {
-    log(LOG_LEVEL.WARN, 'CMD', `Set baud rate ('8') – unknown code ${code}, ignoring`);
-  }
-  return null; // no response
-}
-
-function handleGear(extra) {
-  const gear = extra[0] ? String.fromCharCode(extra[0]) : '?';
-  log(LOG_LEVEL.DEBUG, 'CMD', `Gear ('G') – current gear: '${gear}'`);
-  return null; // no response
-}
-
-function handleRgbLedData() {
-  log(LOG_LEVEL.DEBUG, 'CMD', `RGB LED data ('6') – consumed, sending 0x15 ACQ`);
-  return makeSingleByte(0x15);
-}
-
-function handleRgbMatrixData() {
-  log(LOG_LEVEL.DEBUG, 'CMD', `RGB matrix data ('R') – consumed, sending 0x15 ACQ`);
-  return makeSingleByte(0x15);
-}
-
-function handleCustomProtocol() {
-  log(LOG_LEVEL.DEBUG, 'CMD', `Custom protocol ('P') – consumed, sending 0x15 ACQ`);
-  return makeSingleByte(0x15);
-}
-
-function handleTm1638Data() {
-  log(LOG_LEVEL.DEBUG, 'CMD', `TM1638 data ('3') – consumed (no response)`);
-  return null;
-}
-
-function handleSevenSegData() {
-  log(LOG_LEVEL.DEBUG, 'CMD', `7-segment data ('S') – consumed (no response)`);
-  return null;
-}
-
-function handleMotors(extra) {
-  const action = extra[0] ? String.fromCharCode(extra[0]) : '?';
-  log(LOG_LEVEL.DEBUG, 'CMD', `Motors ('V') – action '${action}'`);
-  if (action === 'C') {
-    log(LOG_LEVEL.INFO, 'CMD', `  Motor count query – reporting 0 motors`);
-    // Format: 0xFF (sentinel) + count byte + provider names... + newline
-    const countBuf   = Buffer.from([0xFF, 0x00]); // 0 motors
-    const newlineBuf = makeStringFrameLn('');       // empty line terminator
-    return Buffer.concat([countBuf, newlineBuf]);
-  }
-  if (action === 'S') {
-    log(LOG_LEVEL.DEBUG, 'CMD', `  Motor set – no motors to update`);
-    return null;
-  }
-  log(LOG_LEVEL.WARN, 'CMD', `  Unknown motor action '${action}'`);
-  return null;
-}
-
-// Extended command dispatcher – payload after 'X ' prefix
-function handleExtendedCommand(subCmd, extra) {
-  log(LOG_LEVEL.DEBUG, 'CMD', `Extended ('X') sub-command: "${subCmd}"`);
-
-  if (subCmd === 'list') {
-    log(LOG_LEVEL.INFO, 'CMD', `  Extended command list – advertising: ${CONFIG.extendedCommands.join(', ')}`);
-    const frames = CONFIG.extendedCommands.map(c => makeStringFrameLn(c));
-    // Terminator: empty PrintLn (just a newline single-byte output)
-    frames.push(makeSingleByte('\n'.charCodeAt(0)));
-    return Buffer.concat(frames);
-  }
-
-  if (subCmd === 'mcutype') {
-    const [s0, s1, s2] = CONFIG.mcuSignature;
-    log(LOG_LEVEL.INFO, 'CMD',
-      `  MCU type – signature 0x${s0.toString(16)} 0x${s1.toString(16)} 0x${s2.toString(16)}`);
-    // Firmware sends three raw bytes via FlowSerialPrint (each wrapped in 0x08)
-    return Buffer.concat([
-      makeSingleByte(s0),
-      makeSingleByte(s1),
-      makeSingleByte(s2),
-    ]);
-  }
-
-  if (subCmd === 'keepalive') {
-    state.keepAliveCount++;
-    log(LOG_LEVEL.TRACE, 'CMD', `  Keep-alive #${state.keepAliveCount}`);
-    return null; // no response
-  }
-
-  // Gauge sub-commands – just consume and ignore
-  const gaugeCommands = ['tach', 'tachometer', 'speedo', 'boost', 'boostgauge',
-                         'temp', 'tempgauge', 'fuel', 'fuelgauge', 'cons',
-                         'consumptiongauge', 'encoders'];
-  if (gaugeCommands.includes(subCmd)) {
-    log(LOG_LEVEL.TRACE, 'CMD', `  Gauge/encoder data for "${subCmd}" – silently consumed`);
-    return null;
-  }
-
-  log(LOG_LEVEL.WARN, 'CMD', `  Unknown extended command: "${subCmd}"`);
-  return null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main packet dispatch
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Decode the ARQ payload (starting at byte 0 = 0x03 MESSAGE_HEADER) and
- * return the bytes to send back (after the ACK), or null.
- */
-function dispatchPayload(payload) {
-  if (payload[0] !== 0x03) {
-    log(LOG_LEVEL.WARN, 'DISPATCH', `Expected MESSAGE_HEADER 0x03, got 0x${payload[0].toString(16)} – ignoring`);
-    return null;
-  }
-
-  const cmd   = String.fromCharCode(payload[1]);
-  const extra = payload.slice(2); // everything after the command byte
-
-  log(LOG_LEVEL.DEBUG, 'DISPATCH', `Command '${cmd}' (0x${payload[1].toString(16).padStart(2,'0')}) extra=[${[...extra].map(b=>b.toString(16).padStart(2,'0')).join(' ')}]`);
-
-  switch (cmd) {
-    case '1': return handleHello(extra);          // Hello
-    case '0': return handleFeatures();            // Features
-    case '4': return handleRgbLedCount();         // RGB count
-    case '2': return handleTm1638Count();         // TM1638 count
-    case 'B': return handleSimpleModulesCount();  // Simple modules count
-    case 'N': return handleDeviceName();          // Device name
-    case 'I': return handleUniqueId();            // Unique ID
-    case 'J': return handleButtonCount();         // Button count
-    case '8': return handleSetBaudrate(extra);    // Set baud rate
-    case 'G': return handleGear(extra);           // Gear display
-    case '6': return handleRgbLedData();          // RGB LED data
-    case 'R': return handleRgbMatrixData();       // RGB matrix data
-    case 'P': return handleCustomProtocol();      // Custom protocol
-    case '3': return handleTm1638Data();          // TM1638 data
-    case 'S': return handleSevenSegData();        // 7-segment data
-    case 'V': return handleMotors(extra);         // Motors
-    case 'X': {
-      // Extended command – sub-command is a space/newline-terminated ASCII string
-      // that starts at extra[0].  It may be followed by data.
-      const rawSubCmd = Buffer.concat([extra]);
-      // Read until 0x20 (space) or 0x0A (newline) or end of buffer
-      let end = rawSubCmd.length;
-      for (let i = 0; i < rawSubCmd.length; i++) {
-        if (rawSubCmd[i] === 0x20 || rawSubCmd[i] === 0x0A) { end = i; break; }
-      }
-      const subCmd   = rawSubCmd.slice(0, end).toString('ascii').trim();
-      const subExtra = rawSubCmd.slice(end + 1);
-      return handleExtendedCommand(subCmd, subExtra);
-    }
-    default:
-      log(LOG_LEVEL.WARN, 'DISPATCH', `Unknown command '${cmd}' (0x${payload[1].toString(16).padStart(2,'0')}) – ignoring`);
-      return null;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Serial I/O
-// ─────────────────────────────────────────────────────────────────────────────
-
-function writeToPort(port, data, label) {
-  if (!data || data.length === 0) return;
-  hexDump(data, `  ARQ OUT [${label}]`);
-  port.write(data, (err) => {
-    if (err) log(LOG_LEVEL.ERROR, 'SERIAL', `Write error: ${err.message}`);
-  });
-}
-
-function onData(port, rawData) {
-  state.rxBuffer = Buffer.concat([state.rxBuffer, rawData]);
-  log(LOG_LEVEL.TRACE, 'SERIAL', `Received ${rawData.length} byte(s), buffer now ${state.rxBuffer.length} byte(s)`);
-
-  let keepParsing = true;
-  while (keepParsing && state.rxBuffer.length > 0) {
-    keepParsing = false;
-
-    let packet;
-    try {
-      packet = tryParsePacket();
-    } catch (e) {
-      // Protocol error – send NACK
-      const nack = makeNack(e.lastValid, e.reason);
-      log(LOG_LEVEL.WARN, 'ARQ', `Sending NACK [lastValid=${e.lastValid}, reason=0x${e.reason.toString(16)}]`);
-      writeToPort(port, nack, `NACK reason=0x${e.reason.toString(16)}`);
-      keepParsing = true;
+    if (type === 0x03) {                        // ACK
+      if (rxBuf.length < 2) break;
+      decoded.push({ type: 'ACK', id: rxBuf[1] });
+      rxBuf = rxBuf.slice(2);
       continue;
     }
 
-    if (!packet) break; // need more data
+    if (type === 0x04) {                        // NACK
+      if (rxBuf.length < 3) break;
+      decoded.push({ type: 'NACK', lastId: rxBuf[1], reason: rxBuf[2] });
+      rxBuf = rxBuf.slice(3);
+      continue;
+    }
 
-    keepParsing = true;
+    if (type === 0x08) {                        // single byte
+      if (rxBuf.length < 2) break;
+      decoded.push({ type: 'BYTE', value: rxBuf[1] });
+      rxBuf = rxBuf.slice(2);
+      continue;
+    }
 
-    const { packetId, payload } = packet;
-    log(LOG_LEVEL.INFO, 'ARQ',
-      `Valid packet id=0x${packetId.toString(16).padStart(2,'0')} ` +
-      `length=${payload.length} ` +
-      `payload=[${[...payload].map(b=>b.toString(16).padStart(2,'0')).join(' ')}]`);
+    if (type === 0x06 || type === 0x07) {       // string or debug frame
+      if (rxBuf.length < 2) break;
+      const len = rxBuf[1];
+      if (rxBuf.length < 2 + len + 1) break;   // wait for terminator 0x20
+      const text = rxBuf.slice(2, 2 + len).toString('latin1');
+      const terminator = rxBuf[2 + len];
+      if (terminator !== 0x20) {
+        log('WARN', 'RX-DECODE', `Expected 0x20 terminator, got 0x${terminator.toString(16)} – skipping byte`);
+        rxBuf = rxBuf.slice(1);
+        continue;
+      }
+      decoded.push({ type: type === 0x06 ? 'STRING' : 'DEBUG', text });
+      rxBuf = rxBuf.slice(3 + len);
+      continue;
+    }
 
-    // Always ACK first
-    const ack = makeAck(packetId);
-    writeToPort(port, ack, `ACK id=0x${packetId.toString(16).padStart(2,'0')}`);
+    if (type === 0x09) {                        // custom/device-initiated packet
+      if (rxBuf.length < 3) break;
+      const pktType = rxBuf[1];
+      const len     = rxBuf[2];
+      if (rxBuf.length < 3 + len) break;
+      const data = rxBuf.slice(3, 3 + len);
+      decoded.push({ type: 'CUSTOM', pktType, data });
+      rxBuf = rxBuf.slice(3 + len);
+      continue;
+    }
 
-    // Then handle the command
-    const response = dispatchPayload(payload);
-    if (response) {
-      writeToPort(port, response, `response cmd='${String.fromCharCode(payload[1])}'`);
+    // Unknown byte – discard and warn
+    log('WARN', 'RX-DECODE', `Unknown frame type 0x${type.toString(16)} – discarding byte`);
+    rxBuf = rxBuf.slice(1);
+  }
+
+  return decoded;
+}
+
+function dispatchDecodedFrames(frames) {
+  for (const frame of frames) {
+    logFrame(frame);
+    if (pendingResolve) {
+      clearTimeout(pendingTimer);
+      const resolve = pendingResolve;
+      pendingResolve = null;
+      pendingReject  = null;
+      pendingTimer   = null;
+      resolve(frame);
+    } else {
+      pendingFrames.push(frame);
+    }
+  }
+}
+
+function logFrame(frame) {
+  switch (frame.type) {
+    case 'ACK':
+      log('DEBUG', 'RX', `ACK  id=0x${frame.id.toString(16).padStart(2,'0')}`);
+      break;
+    case 'NACK':
+      log('WARN',  'RX', `NACK lastId=0x${frame.lastId.toString(16).padStart(2,'0')} reason=0x${frame.reason.toString(16)} (${NACK_REASONS[frame.reason] || 'unknown'})`);
+      break;
+    case 'BYTE':
+      log('DEBUG', 'RX', `BYTE 0x${frame.value.toString(16).padStart(2,'0')} ('${frame.value >= 0x20 && frame.value < 0x7F ? String.fromCharCode(frame.value) : '.'}')`);
+      break;
+    case 'STRING':
+      log('DEBUG', 'RX', `STR  "${frame.text.replace(/\n/g,'\\n').replace(/\r/g,'\\r')}"`);
+      break;
+    case 'DEBUG':
+      log('DEBUG', 'RX', `DBG  "${frame.text.replace(/\n/g,'\\n').replace(/\r/g,'\\r')}"`);
+      break;
+    case 'CUSTOM': {
+      const typeNames = { 1: 'EncoderMove', 2: 'EncoderBtn', 3: 'Button', 4: 'TM1638Btn' };
+      log('INFO', 'RX', `CUSTOM type=0x${frame.pktType.toString(16)} (${typeNames[frame.pktType] || '?'}) data=[${hexStr(frame.data)}]`);
+      break;
     }
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Entry point
+// Promise-based receive helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const portPath = process.argv[2] || '/dev/ttyUSB0';
-const baudRate = parseInt(process.argv[3] || '19200', 10);
+/**
+ * Wait for the next decoded frame, or reject after `timeoutMs`.
+ */
+function nextFrame(timeoutMs = 2000) {
+  return new Promise((resolve, reject) => {
+    if (pendingFrames.length > 0) {
+      resolve(pendingFrames.shift());
+      return;
+    }
+    pendingResolve = resolve;
+    pendingReject  = reject;
+    pendingTimer = setTimeout(() => {
+      pendingResolve = null;
+      pendingReject  = null;
+      reject(new Error(`Timeout waiting for frame (${timeoutMs} ms)`));
+    }, timeoutMs);
+  });
+}
 
-log(LOG_LEVEL.INFO, 'MAIN', '═══════════════════════════════════════════════════');
-log(LOG_LEVEL.INFO, 'MAIN', ' ESP-SimHub Serial Device Simulator');
-log(LOG_LEVEL.INFO, 'MAIN', '═══════════════════════════════════════════════════');
-log(LOG_LEVEL.INFO, 'MAIN', `Port:        ${portPath}`);
-log(LOG_LEVEL.INFO, 'MAIN', `Baud rate:   ${baudRate}`);
-log(LOG_LEVEL.INFO, 'MAIN', `Device name: ${CONFIG.deviceName}`);
-log(LOG_LEVEL.INFO, 'MAIN', `Unique ID:   ${CONFIG.uniqueId}`);
-log(LOG_LEVEL.INFO, 'MAIN', `Version:     0x${CONFIG.firmwareVersion.toString(16)} ('${String.fromCharCode(CONFIG.firmwareVersion)}')`);
-log(LOG_LEVEL.INFO, 'MAIN', `Features:    ${CONFIG.features.join(', ')}`);
-log(LOG_LEVEL.INFO, 'MAIN', `RGB LEDs:    ${CONFIG.rgbLedCount}`);
-log(LOG_LEVEL.INFO, 'MAIN', '───────────────────────────────────────────────────');
-log(LOG_LEVEL.INFO, 'MAIN', 'Waiting for SimHub to connect…');
+/**
+ * Wait for an ACK for the given packetId.
+ * Skips any non-ACK frames received first (they are logged separately).
+ */
+async function waitForAck(packetId, timeoutMs = 2000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const frame = await nextFrame(deadline - Date.now());
+    if (frame.type === 'NACK') {
+      throw new Error(`NACK received: lastId=${frame.lastId} reason=${NACK_REASONS[frame.reason] || frame.reason}`);
+    }
+    if (frame.type === 'ACK') {
+      if (frame.id !== packetId && packetId !== BROADCAST_ID) {
+        log('WARN', 'HOST', `ACK id mismatch: expected 0x${packetId.toString(16)}, got 0x${frame.id.toString(16)}`);
+      }
+      return frame;
+    }
+    // Non-ACK frame arrived before ACK – already logged, keep waiting
+  }
+  throw new Error('Timeout waiting for ACK');
+}
 
-const port = new SerialPort({ path: portPath, baudRate }, (err) => {
-  if (err) {
-    log(LOG_LEVEL.ERROR, 'MAIN', `Failed to open port: ${err.message}`);
-    log(LOG_LEVEL.INFO,  'MAIN', `Tip: create a virtual pair with:  socat -d -d pty,raw,echo=0 pty,raw,echo=0`);
+/**
+ * Collect response frames after an ACK until a terminator condition is met.
+ *
+ * @param {Function} isDone  called with (collectedFrames) → bool
+ * @param {number}   timeoutMs  per-frame timeout
+ */
+async function collectFrames(isDone, timeoutMs = 2000) {
+  const frames = [];
+  while (!isDone(frames)) {
+    const f = await nextFrame(timeoutMs);
+    if (f.type === 'BYTE' || f.type === 'STRING' || f.type === 'DEBUG' || f.type === 'CUSTOM') {
+      frames.push(f);
+    }
+    // ACK/NACK in the middle is unexpected but just log and continue
+  }
+  return frames;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Send helpers
+// ─────────────────────────────────────────────────────────────────────────────
+let port;
+
+function sendRaw(buf, label) {
+  logHex('TX', label, buf);
+  port.write(buf);
+}
+
+/**
+ * Send one ARQ packet and wait for ACK.
+ * Returns the ACK frame.
+ */
+async function sendPacket(packetId, payload, label) {
+  const pkt = buildArqPacket(packetId, payload);
+  sendRaw(pkt, `ARQ[id=0x${packetId.toString(16).padStart(2,'0')}] ${label}`);
+  const ack = await waitForAck(packetId);
+  log('DEBUG', 'HOST', `ACK received for [id=0x${packetId.toString(16).padStart(2,'0')}] ${label}`);
+  return ack;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol phases
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function phase1_hello() {
+  log('INFO', 'PHASE-1', '── Hello ───────────────────────────────────────────');
+
+  // Hello packet: broadcast (0xFF), payload = 0x03 '1' 0x10
+  const payload = buildPayload('1', Buffer.from([0x10]));
+  await sendPacket(BROADCAST_ID, payload, 'Hello');
+
+  // Expect a BYTE frame with the firmware version
+  const frame = await nextFrame(2000);
+  if (frame.type !== 'BYTE') {
+    throw new Error(`Expected BYTE (version), got ${frame.type}`);
+  }
+  const version = frame.value;
+  log('INFO', 'PHASE-1',
+    `Device firmware version: 0x${version.toString(16).padStart(2,'0')} ('${String.fromCharCode(version)}')`);
+
+  if (version !== 0x6A) {
+    log('WARN', 'PHASE-1', `Expected 0x6A ('j'), got 0x${version.toString(16)} – continuing anyway`);
+  } else {
+    log('INFO', 'PHASE-1', 'Version matches expected 0x6A ✓');
+  }
+
+  return version;
+}
+
+async function phase2_enumerate() {
+  log('INFO', 'PHASE-2', '── Feature Enumeration ─────────────────────────────');
+
+  const result = {};
+
+  // ── Features ('0') ────────────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying features…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('0'), 'Features');
+
+    // Collect STRING frames until we get one containing '\n' (terminator)
+    const frames = await collectFrames(
+      fs => fs.some(f => f.type === 'STRING' && f.text.includes('\n'))
+    );
+    const features = frames
+      .filter(f => f.type === 'STRING')
+      .map(f => f.text.replace(/\n/g, '').trim())
+      .filter(Boolean);
+    result.features = features;
+    log('INFO', 'PHASE-2', `Features: [${features.join(', ')}]`);
+  }
+
+  // ── RGB LED count ('4') ───────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying RGB LED count…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('4'), 'RGBCount');
+    const f = await nextFrame();
+    if (f.type === 'BYTE') {
+      result.rgbCount = f.value;
+      log('INFO', 'PHASE-2', `RGB LED count: ${f.value}`);
+    }
+  }
+
+  // ── TM1638 count ('2') ────────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying TM1638 count…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('2'), 'TM1638Count');
+    const f = await nextFrame();
+    if (f.type === 'BYTE') {
+      result.tm1638Count = f.value;
+      log('INFO', 'PHASE-2', `TM1638 count: ${f.value}`);
+    }
+  }
+
+  // ── Simple modules count ('B') ────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying simple modules count…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('B'), 'SimpleModulesCount');
+    const f = await nextFrame();
+    if (f.type === 'BYTE') {
+      result.simpleModules = f.value;
+      log('INFO', 'PHASE-2', `Simple modules count: ${f.value}`);
+    }
+  }
+
+  // ── Extended command list ('X list') ─────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying extended command list…');
+    const id = allocPacketId();
+    // Payload: 0x03 'X' 'l' 'i' 's' 't' 0x0A
+    await sendPacket(id, buildPayload('X', Buffer.from('list\n')), 'X list');
+
+    // Collect STRING frames until we see an empty-ish line or a bare BYTE 0x0A
+    const frames = await collectFrames(fs => {
+      const last = fs[fs.length - 1];
+      if (!last) return false;
+      // Terminator: firmware sends PrintLn() which is a single-byte output 0x0A
+      if (last.type === 'BYTE' && last.value === 0x0A) return true;
+      // Or a STRING frame whose text is just '\n'
+      if (last.type === 'STRING' && last.text.trim() === '') return true;
+      return false;
+    }, 1500);
+
+    const cmds = frames
+      .filter(f => f.type === 'STRING')
+      .map(f => f.text.replace(/\n/g, '').trim())
+      .filter(Boolean);
+    result.extendedCommands = cmds;
+    log('INFO', 'PHASE-2', `Extended commands: [${cmds.join(', ')}]`);
+  }
+
+  // ── Device name ('N') ─────────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying device name…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('N'), 'DeviceName');
+    const f = await nextFrame();
+    if (f.type === 'STRING') {
+      result.deviceName = f.text.replace(/\n/g, '').trim();
+      log('INFO', 'PHASE-2', `Device name: "${result.deviceName}"`);
+    }
+  }
+
+  // ── Unique ID ('I') ───────────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying unique ID…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('I'), 'UniqueId');
+    const f = await nextFrame();
+    if (f.type === 'STRING') {
+      result.uniqueId = f.text.replace(/\n/g, '').trim();
+      log('INFO', 'PHASE-2', `Unique ID: "${result.uniqueId}"`);
+    }
+  }
+
+  // ── Button count ('J') ────────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying button count…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('J'), 'ButtonCount');
+    const f = await nextFrame();
+    if (f.type === 'BYTE') {
+      result.buttonCount = f.value;
+      log('INFO', 'PHASE-2', `Button count: ${f.value}`);
+    }
+  }
+
+  // ── MCU type ('X mcutype') ────────────────────────────────────────────────
+  {
+    log('INFO', 'PHASE-2', 'Querying MCU type…');
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('X', Buffer.from('mcutype\n')), 'X mcutype');
+
+    // Expects exactly 3 BYTE frames (signature bytes)
+    const sig = [];
+    for (let i = 0; i < 3; i++) {
+      const f = await nextFrame(1500);
+      if (f.type === 'BYTE') sig.push(f.value);
+    }
+    result.mcuSignature = sig;
+    log('INFO', 'PHASE-2',
+      `MCU signature: [${sig.map(b => '0x' + b.toString(16).padStart(2,'0')).join(', ')}]`);
+    if (sig[0] === 0x1E && sig[1] === 0x98 && sig[2] === 0x01) {
+      log('INFO', 'PHASE-2', 'Signature matches ATmega2560 ✓');
+    } else {
+      log('WARN', 'PHASE-2', 'Signature does not match expected ATmega2560 [0x1E, 0x98, 0x01]');
+    }
+  }
+
+  return result;
+}
+
+async function phase3_keepalive(enumResult) {
+  log('INFO', 'PHASE-3', '── Streaming / Keepalive ───────────────────────────');
+  log('INFO', 'PHASE-3', 'Sending initial gear command then repeating keepalives. Press Ctrl-C to stop.');
+
+  // First packet: gear display  ('G' + gear char)
+  {
+    const id = allocPacketId();
+    await sendPacket(id, buildPayload('G', Buffer.from(['-'.charCodeAt(0)])), 'Gear=-');
+    log('INFO', 'PHASE-3', 'Gear set to "-"');
+  }
+
+  let kaCount = 0;
+  return new Promise(() => {   // never resolves – runs until Ctrl-C
+    const interval = setInterval(async () => {
+      kaCount++;
+      try {
+        const id = allocPacketId();
+        // 'X keepalive\n'
+        const pkt = buildArqPacket(id, buildPayload('X', Buffer.from('keepalive\n')));
+        logHex('TX', `ARQ[id=0x${id.toString(16).padStart(2,'0')}] keepalive #${kaCount}`, pkt);
+        port.write(pkt);
+        // The device does not respond to keepalive; just wait briefly for any
+        // device-initiated frames (buttons, encoders) before the next cycle.
+        await new Promise(r => setTimeout(r, 50));
+      } catch (err) {
+        log('WARN', 'PHASE-3', `Keepalive error: ${err.message}`);
+      }
+    }, 500);
+
+    // Drain any unexpected device-initiated frames (buttons, encoders, debug)
+    // These arrive asynchronously via the normal onData path and are already
+    // logged by dispatchDecodedFrames → logFrame.
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function main() {
+  log('INFO', 'MAIN', '═══════════════════════════════════════════════════════');
+  log('INFO', 'MAIN', ' ESP-SimHub Host Simulator  (tests a real device)');
+  log('INFO', 'MAIN', '═══════════════════════════════════════════════════════');
+  log('INFO', 'MAIN', `Port:      ${portPath}`);
+  log('INFO', 'MAIN', `Baud rate: ${baudRate}`);
+  log('INFO', 'MAIN', '───────────────────────────────────────────────────────');
+
+  await new Promise((resolve, reject) => {
+    port = new SerialPort({ path: portPath, baudRate }, err => {
+      if (err) reject(err); else resolve();
+    });
+  });
+
+  log('INFO', 'MAIN', `Port ${portPath} opened at ${baudRate} baud`);
+
+  port.on('data', rawData => {
+    logHex('RX-RAW', 'serial', rawData);
+    rxBuf = Buffer.concat([rxBuf, rawData]);
+    dispatchDecodedFrames(tryDecodeFrames());
+  });
+
+  port.on('error', err => log('ERROR', 'SERIAL', err.message));
+  port.on('close', () => { log('INFO', 'SERIAL', 'Port closed'); process.exit(0); });
+
+  // Small delay to let the device settle after port open
+  await new Promise(r => setTimeout(r, 500));
+
+  try {
+    await phase1_hello();
+    const enumResult = await phase2_enumerate();
+
+    log('INFO', 'SUMMARY', '───────────────────────────────────────────────────');
+    log('INFO', 'SUMMARY', 'Enumeration complete:');
+    for (const [k, v] of Object.entries(enumResult)) {
+      log('INFO', 'SUMMARY', `  ${k.padEnd(18)} = ${Array.isArray(v) ? JSON.stringify(v) : v}`);
+    }
+    log('INFO', 'SUMMARY', '───────────────────────────────────────────────────');
+
+    await phase3_keepalive(enumResult);
+  } catch (err) {
+    log('ERROR', 'MAIN', `Protocol error: ${err.message}`);
+    log('ERROR', 'MAIN', 'Stack: ' + err.stack);
+    port.close();
     process.exit(1);
   }
-  log(LOG_LEVEL.INFO, 'MAIN', `Port ${portPath} opened at ${baudRate} baud`);
-});
+}
 
-port.on('data', (data) => onData(port, data));
-
-port.on('error', (err) => {
-  log(LOG_LEVEL.ERROR, 'SERIAL', `Port error: ${err.message}`);
-});
-
-port.on('close', () => {
-  log(LOG_LEVEL.INFO, 'SERIAL', 'Port closed');
+process.on('SIGINT', () => {
+  log('INFO', 'MAIN', 'Interrupted – closing port');
+  if (port && port.isOpen) port.close();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
-  log(LOG_LEVEL.INFO, 'MAIN', 'Shutting down…');
-  port.close();
+main().catch(err => {
+  log('ERROR', 'MAIN', err.message);
+  process.exit(1);
 });
