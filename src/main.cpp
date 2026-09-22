@@ -54,7 +54,10 @@ FullLoopbackStream incomingStream;
 
 
 // Title of the device
+// Can be overridden from platformio.ini with -D DEVICE_NAME='"Your Name"'
+#ifndef DEVICE_NAME
 #define DEVICE_NAME "ESP-SimHub Device" //{"Group":"General","Name":"DEVICE_NAME","Title":"Device name,\r\n make sure to use a unique name when using multiple arduinos","DefaultValue":"SimHub Dash","Type":"string","Template":"#define DEVICE_NAME \"{0}\""}
+#endif
 
 // Known working features:
 //  
@@ -353,9 +356,18 @@ Adafruit_NeoPixel WS2812B_strip = Adafruit_NeoPixel(WS2812B_RGBLEDCOUNT, WS2812B
 // WS2812b chained RGBLEDS count
 // 0 disabled, > 0 enabled
 #define WS2812B_MATRIX_ENABLED 1                 //{"Group":"WS2812B RGB Matrix","Name":"WS2812B_MATRIX_ENABLED","Title":"Enable WS2812B 8x8 matrix","DefaultValue":"0","Type":"bool"}
+// Data pin of the 8x8 matrix
+// Can be overridden from platformio.ini with -D WS2812B_MATRIX_DATAPIN=<pin>
+#ifndef WS2812B_MATRIX_DATAPIN
 #define WS2812B_MATRIX_DATAPIN 10                //{"Name":"WS2812B_MATRIX_DATAPIN","Title":"Data (DIN) digital pin number","DefaultValue":"6","Type":"pin;WS2812B Matrix data","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#endif
+// Both can be overridden from platformio.ini with -D WS2812B_MATRIX_SERPENTINELAYOUT=<0|1>
+#ifndef WS2812B_MATRIX_SERPENTINELAYOUT
 #define WS2812B_MATRIX_SERPENTINELAYOUT 0        //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUT","Title":"Serpentine layout matrix","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0"}
+#endif
+#ifndef WS2812B_MATRIX_SERPENTINELAYOUTREVERSE
 #define WS2812B_MATRIX_SERPENTINELAYOUTREVERSE 0 //{"Name":"WS2812B_MATRIX_SERPENTINELAYOUTREVERSE","Title":"Reverse serpentine layout start direction","DefaultValue":"0","Type":"bool","Condition":"WS2812B_MATRIX_ENABLED>0 && WS2812B_MATRIX_SERPENTINELAYOUT>0"}
+#endif
 
 #include "SHRGBMatrixNeoPixelFastLed.h"
 SHRGBMatrixNeoPixelFastLed shRGBMatrixWS2812B;
