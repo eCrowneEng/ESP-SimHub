@@ -1,0 +1,12 @@
+{
+  "name": "esp-simhub-serial-simulator",
+  "version": "1.0.0",
+  "description": "Simulates an ESP-SimHub device over a serial port for protocol verification",
+  "main": "simulator.js",
+  "scripts": {
+    "start": "node simulator.js"
+  },
+  "dependencies": {
+    "serialport": "^12.0.0"
+  }
+}
