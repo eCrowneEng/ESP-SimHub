@@ -371,6 +371,7 @@ Adafruit_NeoPixel WS2812B_strip = Adafruit_NeoPixel(WS2812B_RGBLEDCOUNT, WS2812B
 
 #include "SHRGBMatrixNeoPixelFastLed.h"
 SHRGBMatrixNeoPixelFastLed shRGBMatrixWS2812B;
+void sh14OnMatrixFrame(const uint8_t* rgb64x3) { shRGBMatrixWS2812B.renderFrame(rgb64x3); }
 #endif
 
 
@@ -1511,7 +1512,7 @@ void loop() {
 			}
 		}
 	}
-	if (millis() - lastSerialActivity > 5000) {
+	if (millis() - lastSerialActivity > 5000 && !sh14BlocksIdleShutdown()) {
 		Command_Shutdown();
 	}
 }
