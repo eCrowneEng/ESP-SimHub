@@ -37,6 +37,15 @@ public:
 		//delay(10);
 	}
 
+	// Push a full 8x8 frame, row major (index = row * 8 + col), 64 * 3 bytes.
+	// Uses the same mapping as the classic protocol, so both render alike.
+	void renderFrame(const uint8_t* rgb64x3) {
+		for (int i = 0; i < 64; i++) {
+			setPixelColor(i, rgb64x3[i * 3], rgb64x3[i * 3 + 1], rgb64x3[i * 3 + 2]);
+		}
+		show();
+	}
+
 protected:
 	void setPixelColor(uint8_t lednumber, uint8_t r, uint8_t g, uint8_t b) {
 		if (zigzag) {
